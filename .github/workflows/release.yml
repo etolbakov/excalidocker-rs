@@ -1,0 +1,87 @@
+name: Release 🚀
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - feat/initial-converter
+    paths:
+      - src/**
+      - Cargo.toml
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+
+jobs:
+  release-macos:
+    name: Release MacOS artifact
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::$(grep "^version" Cargo.toml | awk '{print $3}' | tr -d '"')
+
+      - name: Install rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Build for MacOS
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+
+      - name: Upload MacOS Binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: excalidocker-macos
+          path: ./target/release/excalidocker
+
+  create-release:
+    name: Create Release
+    needs: [release-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::$(grep "^version" Cargo.toml | awk '{print $3}' | tr -d '"')
+
+      - name: Update or Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}          
+          body_path: ./.github/CHANGELOG.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download MacOS Binary
+        uses: actions/download-artifact@v2
+        with:
+          name: excalidocker-macos
+          path: ./target/release/
+
+      - name: Upload MacOS Binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./target/release/excalidocker
+          asset_name: excalidocker-macos
+          asset_content_type: application/octet-stream
