@@ -208,26 +208,15 @@ fn main() {
     }   
     for DependencyComponent {name, parent} in &components {
         let ContainerPoint(x, y) = container_name_to_point.get(name).unwrap();
-        dbg!(name);
-        dbg!(x);
-        dbg!(y);
-
         let mut sorted_container_port = parent
             .iter()
             .map(|dc| container_name_to_point.get(&dc.name).unwrap())
             .collect::<Vec<&ContainerPoint>>();
         sorted_container_port.sort_by(|cp1, cp2| cp2.1.cmp(&cp1.1));
-        dbg!(sorted_container_port.clone());
-
-        for (i, parent) in sorted_container_port.iter().enumerate() {                            
+        for (i, parent) in sorted_container_port.iter().enumerate() {
                 let x_parent = &parent.0;
                 let y_parent = &parent.1;
                 let level_height = y_parent - y;
-                dbg!(y_parent);
-                dbg!(y);
-                dbg!(y_margin);
-                dbg!(level_height);
-
                 let interation_x_margin = (i + 1) as i32 * scale;
                 let line1 = Element::simple_line(
                     x + interation_x_margin,
@@ -284,7 +273,6 @@ fn find_containers_traversal_order(container_name_to_parents: HashMap<&str, Depe
     for (name, _) in &container_name_to_parents {
         traverse_in_hierarchy(&name, &container_name_to_parents, &mut containers_traversal_order, &mut visited);
     }
-    dbg!(containers_traversal_order.clone());
     containers_traversal_order
 }
 
@@ -393,18 +381,8 @@ fn check_parsing() {
 
     let docker_compose: HashMap<String, serde_yaml::Value> = serde_yaml::from_str(&contents).unwrap();
     let value = docker_compose.get("services").unwrap();
-    // dbg!(value);
-    // let mapping = value.as_mapping().unwrap();
-    // dbg!(mapping);
-    // let get = mapping.get("nginx").unwrap();
-
     for (k, v) in value.as_mapping().unwrap() {
-        dbg!(k);
-        // dbg!(v);
         let convert_to_container = convert_to_container(v);
         dbg!(convert_to_container);
     }
-    // dbg!(get);
-    // let convert_to_container = convert_to_container(get);
-    // dbg!(convert_to_container);
 }
