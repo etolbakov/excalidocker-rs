@@ -2,32 +2,29 @@
 Rust-based utility to convert docker-compose.yaml files into [excalidraw](https://excalidraw.com/) files.
 ![excalidocker](./data/img/excalidocker.png)
 
-
-## Installation
-
-1. Install Rust and Cargo if you haven't already. Refer to the official Rust documentation for [installation instructions](https://www.rust-lang.org/tools/install):
-2. Clone this repository:
-```shell
-git clone https://github.com/etolbakov/excalidocker-rs.git
-```
-3. Build the project using Cargo:
-```shell
-cd excalidocker-rs && cargo build --release
-```
-There is the `make r` command available in the [Makefile](/Makefile) 
+# Table of Contents
+1. [Usage](#usage) 
+2. [Installation](#installation)
+3. [Contributing](#Contributing)
+4. [Roadmap](#roadmap)
 
 ## Usage
 0. Download the artifact from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it. 
-Use the following command to get the help menu:
+To get the `help` menu use:
 ```sh
 ./excalidocker -h
 ```
 ![release-artifact-output](./data/img/release-artifact-output.png)
+The application should be provided with two parameters: 
+ - `--input-path` :  `docker-compose.yaml` file path that you would like to convert 
+ - `--output-path` : file path for the output excalidraw file. By default a file is be stored under "/tmp/<docker-compose-file-name>.excalidraw"
 
-The following command can be used to see the tool in action:
+
+To see the tool in action use:
 ```sh
 ./excalidocker --input-path /your/path/docker-compose.yaml --output-path /your/path/result.excalidraw
 ```
+The produced file could be opened in [excalidraw](https://excalidraw.com/) and.... hopefully it won't be too shocking 👻 😅.
 
 > **Warning**
 > On the first launch the ungzipped artifact I saw the following pop up
@@ -41,34 +38,28 @@ The following command can be used to see the tool in action:
 > **Note**
 > At the moment only darwin is supported.
 
-1. The application supports two input parameters. Run
-```sh
-./target/release/excalidocker -h
+## Installation
+If you'd like to build `excalidocker` locally follow these steps:
+
+1. Install Rust and Cargo if you haven't already. Refer to the official Rust documentation for [installation instructions](https://www.rust-lang.org/tools/install):
+2. Clone this repository:
+```shell
+git clone https://github.com/etolbakov/excalidocker-rs.git
 ```
-or `make s` to check the output which should look like:
-
-```sh
-./target/release/excalidocker -h
-Utility to convert docker-compose into excalidraw
-
-Usage: excalidocker [OPTIONS] --input-path <INPUT_PATH>
-
-Options:
-  -i, --input-path <INPUT_PATH>    file path to the docker-compose.yaml
-  -o, --output-path <OUTPUT_PATH>  file path for the output excalidraw file. By default a file is be stored under "/tmp/<docker-compose-file-name>.excalidraw"
-  -h, --help                       Print help
-  -V, --version                    Print version
+3. Build the project using Cargo:
+```shell
+cd excalidocker-rs && cargo build --release
 ```
+There is the `make r` command available in the [Makefile](/Makefile) along with other useful command shortcuts.
 
-2. To see how this tool converts a `docker-compose.yaml` file into `excalidraw`, run the following command:
-```sh
-./target/release/excalidocker --input-path ./data/compose/docker-compose.yaml --output-path /your/path/result.excalidraw
-```
-or it's shortcut `make e1` as an alternative. This will generate the `result.excalidraw` file under the provided path.
 
-`--output-path` could be omitted, in which case the file would inherit the name of the original yaml and will be placed under `/tmp` folder.
-
-The produced file could be opened in [excalidraw](https://excalidraw.com/) and.... hopefully it won't be too shocking 👻 😅.
+## Roadmap
+These are the features that I would like to add
+ - 📊 visualize more data from docker-compose (volumes, network, etc)
+ - 🐳 docker artifact 
+ - 🐧 linux artifact
+ - 🎨 colour output
+ - etc
 
 ## Contributing
 
