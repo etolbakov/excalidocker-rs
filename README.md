@@ -12,7 +12,7 @@ Rust-based utility to convert docker-compose.yaml files into [excalidraw](https:
 0. Download the latest artifact from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it. 
 
 > **Note**
-> At the moment only darwin is supported.
+> At the moment only Darwin OS is supported.
 
 To get the `help` menu use:
 ```sh
