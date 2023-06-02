@@ -153,11 +153,7 @@ fn main() {
         for (i, port) in ports.iter().enumerate() {
             let container_x = x + (i as i32 * 80);
             let container_y = y + scale * 8;
-            // TODO handle the case for the shortcut of the port definition
-            let split = port.split(":").collect::<Vec<&str>>();
-            let host_port_str = split[0];            
-            let container_port_str = split[1];
-            
+            let (host_port_str, container_port_str) = extract_host_container_ports(port);
             let container_port = Element::draw_ellipse (
                 container_x,
                 container_y,
@@ -170,7 +166,7 @@ fn main() {
                 container_x + 15,
                 container_y + 20,
                 locked,
-                host_port_str.to_string(),
+                host_port_str.clone(),
             );
 
             let simple_arrow = Element::simple_arrow(
@@ -190,7 +186,7 @@ fn main() {
                     x + 20 + (i as i32 * 80),
                     y + 80,
                     locked,
-                    container_port_str.to_string(),
+                    container_port_str,
                 );
                 excalidraw_file.elements.push(container_port_text);
             }
@@ -264,7 +260,31 @@ fn main() {
             format!( "/tmp/{}.excalidraw", file_name_and_extension[0])
         }
     };
-    fs::write(output_file, excalidraw_data).expect("Unable to write file");
+    fs::write(output_file.clone(), excalidraw_data).expect("Unable to write file");    
+    println!("\nThe excalidraw file is successfully generated and put at '{}'\n", output_file);
+}
+
+/// There are several to declare ports in docker-compose
+///  - "0" single port value(range of values): a container port(range) will be assigned to random host port(range)
+///  - "1" colon separated values (range of values): container port (range) is assigned to given host port (range)
+///  - "_" detailed decrlaration which may include `host_ip`, `protocol` etc
+fn extract_host_container_ports(port: &str) -> (String, String) {
+    let port_parts: Vec<_> = port.rmatch_indices(":").collect();
+    let port_string = port.to_string();
+    match port_parts.len() {
+        0 => (port_string.clone(), port_string),
+        1 => {
+            let split = port.split(":").collect::<Vec<&str>>();
+            (split[0].to_string(), split[1].to_string())
+        }
+        _ => {
+            let colon_index = port_parts.first().unwrap().0;            
+            (
+                port_string.chars().take(colon_index).collect(), 
+                port_string.chars().skip(colon_index + 1).collect()
+            )
+        }
+    }    
 }
 
 fn find_containers_traversal_order(container_name_to_parents: HashMap<&str, DependencyComponent>) -> Vec<String> {
@@ -385,4 +405,37 @@ fn check_parsing() {
         let convert_to_container = convert_to_container(v);
         dbg!(convert_to_container);
     }
+}
+          
+#[test]
+fn check_port_parsing() {
+    // - "3000"                 # container port (3000), assigned to random host port
+    let (host_port, container_port) = extract_host_container_ports("3000");
+    assert_eq!(host_port, "3000");
+    assert_eq!(container_port, "3000");
+    
+    // - "3001-3005"            # container port range (3001-3005), assigned to random host ports
+    let (host_port, container_port) = extract_host_container_ports("3001-3005");
+    assert_eq!(host_port, "3001-3005");
+    assert_eq!(container_port, "3001-3005");
+
+    // - "8001:8001"            # container port (8001), assigned to given host port (8001)
+    let (host_port, container_port) = extract_host_container_ports("8001:8001");
+    assert_eq!(host_port, "8001");
+    assert_eq!(container_port, "8001");
+
+    // - "9090-9091:8080-8081"  # container port range (8080-8081), assigned to given host port range (9090-9091)
+    let (host_port, container_port) = extract_host_container_ports("9090-9091:8080-8081");
+    assert_eq!(host_port, "9090-9091");
+    assert_eq!(container_port, "8080-8081");
+        
+    // - "127.0.0.1:8002:8002"  # container port (8002), assigned to given host port (8002) and bind to 127.0.0.1
+    let (host_port, container_port) = extract_host_container_ports("127.0.0.1:8002:8002");
+    assert_eq!(host_port, "127.0.0.1:8002");
+    assert_eq!(container_port, "8002");
+
+    // - "6060:6060/udp"        # container port (6060) restricted to UDP protocol, assigned to given host (6060)
+    let (host_port, container_port) = extract_host_container_ports("6060:6060/udp");
+    assert_eq!(host_port, "6060");
+    assert_eq!(container_port, "6060/udp");
 }
