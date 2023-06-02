@@ -10,6 +10,8 @@ e2:
 	./target/release/excalidocker --input-path ./data/compose/docker-compose-large.yaml
 e3:
 	./target/release/excalidocker --output-path /tmp/no.excalidraw
+e4:
+	./target/release/excalidocker --input-path ./data/compose/docker-compose-very-large.yaml
 
 check:
 	cargo check --all-features
