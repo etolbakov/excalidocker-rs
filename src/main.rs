@@ -115,7 +115,7 @@ fn main() {
         let mut dependency_component = DependencyComponent::new(container_name_str.to_string());                
         if let Some(dependencies) = &container_struct.depends_on {
             dependencies
-            .into_iter()
+            .iter()
             .for_each(|s|
                 dependency_component.parent.push(DependencyComponent::new(s.to_string()))
             );
@@ -256,7 +256,7 @@ fn main() {
     let output_file = match cli.output_path {
         Some(file_path) => file_path,
         None => {
-            let file_name_and_extension = cli.input_path.split("/").last().unwrap().split(".").collect::<Vec<&str>>();
+            let file_name_and_extension = cli.input_path.split('/').last().unwrap().split('.').collect::<Vec<&str>>();
             format!( "/tmp/{}.excalidraw", file_name_and_extension[0])
         }
     };
@@ -269,12 +269,12 @@ fn main() {
 ///  - "1" colon separated values (range of values): container port (range) is assigned to given host port (range)
 ///  - "_" detailed decrlaration which may include `host_ip`, `protocol` etc
 fn extract_host_container_ports(port: &str) -> (String, String) {
-    let port_parts: Vec<_> = port.rmatch_indices(":").collect();
+    let port_parts: Vec<_> = port.rmatch_indices(':').collect();
     let port_string = port.to_string();
     match port_parts.len() {
         0 => (port_string.clone(), port_string),
         1 => {
-            let split = port.split(":").collect::<Vec<&str>>();
+            let split = port.split(':').collect::<Vec<&str>>();
             (split[0].to_string(), split[1].to_string())
         }
         _ => {
@@ -290,8 +290,8 @@ fn extract_host_container_ports(port: &str) -> (String, String) {
 fn find_containers_traversal_order(container_name_to_parents: HashMap<&str, DependencyComponent>) -> Vec<String> {
     let mut containers_traversal_order: Vec<String> = Vec::new();
     let mut visited: HashSet<String> = HashSet::new();
-    for (name, _) in &container_name_to_parents {
-        traverse_in_hierarchy(&name, &container_name_to_parents, &mut containers_traversal_order, &mut visited);
+    for name in container_name_to_parents.keys() {
+        traverse_in_hierarchy(name, &container_name_to_parents, &mut containers_traversal_order, &mut visited);
     }
     containers_traversal_order
 }

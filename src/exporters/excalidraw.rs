@@ -187,7 +187,7 @@ impl Element {
             opacity,
             stroke_sharpness,
             locked,
-            text: text.clone(),
+            text,
             font_size,
             font_family,
             text_align,
