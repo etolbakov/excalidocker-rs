@@ -62,7 +62,7 @@ These are the features that I would like to add at some point:
  - 🐳 docker artifact 
  - 🐧 linux artifact
  - 🎨 colour output
- - 🦀 varios code improvements/enhancements. Feel free to review/suggest if anything could be done better!
+ - 🦀 various code improvements/enhancements. Feel free to review/suggest if anything could be done better!
  - 👨‍💻 etc
 
 ## Contributing
