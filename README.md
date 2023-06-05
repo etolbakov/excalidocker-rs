@@ -3,10 +3,14 @@ Rust-based utility to convert docker-compose.yaml files into [excalidraw](https:
 ![excalidocker](./data/img/excalidocker.png)
 
 # Table of Contents
-1. [Usage](#usage) 
-2. [Installation](#installation)
-3. [Contributing](#Contributing)
-4. [Roadmap](#roadmap)
+1. [Motivation](#motivation) 
+2. [Usage](#usage) 
+3. [Installation](#installation)
+4. [Contributing](#Contributing)
+5. [Roadmap](#roadmap)
+
+## Motivation
+TODO...
 
 ## Usage
 0. Download the latest artifact from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it. 
@@ -19,9 +23,11 @@ To get the `help` menu use:
 ./excalidocker -h
 ```
 ![release-artifact-output](./data/img/release-artifact-output.png)
+❌❌❌❌ actualize the screenshot
 
 The application should be provided with two parameters: 
  - `--input-path` :  `docker-compose.yaml` file path that you would like to convert 
+ - `--skip-dependencies` : display connecting lines between services; if `true` then only service without the lines are rendered
  - `--output-path` : file path for the output excalidraw file. By default a file is be stored under `"/tmp/<docker-compose-file-name>.excalidraw"`
 
 

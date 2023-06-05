@@ -16,12 +16,15 @@ use crate::exporters::excalidraw::elements;
 #[derive(Parser)]
 #[command(name = "Excalidocker")]
 #[command(author = "Evgeny Tolbakov <ev.tolbakov@gmail.com>")]
-#[command(version = "1.0")]
+#[command(version = "0.1.3")]
 #[command(about = "Utility to convert docker-compose into excalidraw", long_about = None)]
 struct Cli {
     /// file path to the docker-compose.yaml
     #[arg(short, long)]
     input_path: String,
+    /// display connecting lines between services; if `true` then only service without the lines are rendered
+    #[arg(short, long, default_value_t = false)]
+    skip_dependencies: bool,
     /// file path for the output excalidraw file.
     /// By default a file is be stored under "/tmp/<docker-compose-file-name>.excalidraw"
     #[arg(short, long)]
@@ -209,47 +212,49 @@ fn main() {
             .map(|dc| container_name_to_point.get(&dc.name).unwrap())
             .collect::<Vec<&ContainerPoint>>();
         sorted_container_port.sort_by(|cp1, cp2| cp2.1.cmp(&cp1.1));
-        for (i, parent) in sorted_container_port.iter().enumerate() {
-                let x_parent = &parent.0;
-                let y_parent = &parent.1;
-                let level_height = y_parent - y;
-                let interation_x_margin = (i + 1) as i32 * scale;
-                let line1 = Element::simple_line(
-                    x + interation_x_margin,
-                    *y,
-                    locked,
-                    elements::CONNECTION_STYLE.into(),
-                    vec![
-                        [0, 0],
-                        [0, level_height - height],
-                    ],
-                );
-                let line2 = Element::simple_line(
-                    x + interation_x_margin,
-                    *y_parent - height,
-                    locked,
-                    elements::CONNECTION_STYLE.into(),
-                    vec![
-                        [0, 0],
-                        [-*x + x_parent + width - interation_x_margin * 2, 0]
-                    ],
-                );
-                let line_arrow = Element::simple_arrow(
-                    *x_parent + width - interation_x_margin,
-                    *y_parent - height,
-                    0,
-                    y_margin,
-                    locked,
-                    elements::CONNECTION_STYLE.into(),
-                    vec![
-                        [0, 0],
-                        [0, y_margin]
-                    ],
-                );
-                excalidraw_file.elements.push(line1);
-                excalidraw_file.elements.push(line2);
-                excalidraw_file.elements.push(line_arrow);
-        }      
+        if !cli.skip_dependencies {
+            for (i, parent) in sorted_container_port.iter().enumerate() {
+                    let x_parent = &parent.0;
+                    let y_parent = &parent.1;
+                    let level_height = y_parent - y;
+                    let interation_x_margin = (i + 1) as i32 * scale;
+                    let line1 = Element::simple_line(
+                        x + interation_x_margin,
+                        *y,
+                        locked,
+                        elements::CONNECTION_STYLE.into(),
+                        vec![
+                            [0, 0],
+                            [0, level_height - height],
+                        ],
+                    );
+                    let line2 = Element::simple_line(
+                        x + interation_x_margin,
+                        *y_parent - height,
+                        locked,
+                        elements::CONNECTION_STYLE.into(),
+                        vec![
+                            [0, 0],
+                            [-*x + x_parent + width - interation_x_margin * 2, 0]
+                        ],
+                    );
+                    let line_arrow = Element::simple_arrow(
+                        *x_parent + width - interation_x_margin,
+                        *y_parent - height,
+                        0,
+                        y_margin,
+                        locked,
+                        elements::CONNECTION_STYLE.into(),
+                        vec![
+                            [0, 0],
+                            [0, y_margin]
+                        ],
+                    );
+                    excalidraw_file.elements.push(line1);
+                    excalidraw_file.elements.push(line2);
+                    excalidraw_file.elements.push(line_arrow);
+            }
+        }
     }
     
     let excalidraw_data = serde_json::to_string(&excalidraw_file).unwrap();
