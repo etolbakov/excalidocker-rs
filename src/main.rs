@@ -1,4 +1,5 @@
 mod exporters;
+mod error;
 
 use clap::{Parser, arg, command};
 use std::collections::HashSet;
@@ -11,19 +12,26 @@ use serde::{Serialize, Deserialize};
 use exporters::excalidraw::{ExcalidrawFile, Element};
 use serde_yaml::Value;
 
+use crate::error::ExcalidockerError::{self,
+    InvalidDockerCompose, FileIncorrectExtension, 
+    FileNotFound, FileFailedRead, FileFailedParsing
+};
 use crate::exporters::excalidraw::elements;
 
 #[derive(Parser)]
 #[command(name = "Excalidocker")]
 #[command(author = "Evgeny Tolbakov <ev.tolbakov@gmail.com>")]
-#[command(version = "1.0")]
+#[command(version = "0.1.3")]
 #[command(about = "Utility to convert docker-compose into excalidraw", long_about = None)]
 struct Cli {
     /// file path to the docker-compose.yaml
     #[arg(short, long)]
     input_path: String,
+    /// display connecting lines between services; if `true` then only service without the lines are rendered
+    #[arg(short, long, default_value_t = false)]
+    skip_dependencies: bool,
     /// file path for the output excalidraw file.
-    /// By default a file is be stored under "/tmp/<docker-compose-file-name>.excalidraw"
+    /// By default the file content is sent to console output
     #[arg(short, long)]
     output_path: Option<String>,
 }
@@ -104,10 +112,26 @@ fn main() {
     let mut container_name_to_point = HashMap::new();
     let mut container_name_to_parents: HashMap<&str, DependencyComponent> = HashMap::new();
     let mut container_name_to_container_struct = HashMap::new();
-    
-    let docker_compose_yaml = &read_docker_compose_yaml_file(cli.input_path.as_str());
-    let services = docker_compose_yaml.get("services").unwrap();
-    
+
+    let input_filepath = cli.input_path.as_str();
+    let docker_compose_yaml = match parse_docker_compose_yaml(input_filepath) {
+        Ok(yaml_content) => yaml_content,
+        Err(err) => {
+            println!("{}", err);
+            return;
+        },
+    };
+    let services = match docker_compose_yaml.get("services") {
+        Some(services) => services,
+        None => {
+            println!("{}", InvalidDockerCompose { 
+                path: input_filepath.to_string(), 
+                msg: "Failed to get 'services' attribute".to_string()
+            });
+            return;
+        }
+    }; 
+
     for (container_name_val, container_data_val) in services.as_mapping().unwrap() {
         let container_struct = convert_to_container(container_data_val).unwrap();
         let container_name_str = container_name_val.as_str().unwrap();
@@ -209,59 +233,60 @@ fn main() {
             .map(|dc| container_name_to_point.get(&dc.name).unwrap())
             .collect::<Vec<&ContainerPoint>>();
         sorted_container_port.sort_by(|cp1, cp2| cp2.1.cmp(&cp1.1));
-        for (i, parent) in sorted_container_port.iter().enumerate() {
-                let x_parent = &parent.0;
-                let y_parent = &parent.1;
-                let level_height = y_parent - y;
-                let interation_x_margin = (i + 1) as i32 * scale;
-                let line1 = Element::simple_line(
-                    x + interation_x_margin,
-                    *y,
-                    locked,
-                    elements::CONNECTION_STYLE.into(),
-                    vec![
-                        [0, 0],
-                        [0, level_height - height],
-                    ],
-                );
-                let line2 = Element::simple_line(
-                    x + interation_x_margin,
-                    *y_parent - height,
-                    locked,
-                    elements::CONNECTION_STYLE.into(),
-                    vec![
-                        [0, 0],
-                        [-*x + x_parent + width - interation_x_margin * 2, 0]
-                    ],
-                );
-                let line_arrow = Element::simple_arrow(
-                    *x_parent + width - interation_x_margin,
-                    *y_parent - height,
-                    0,
-                    y_margin,
-                    locked,
-                    elements::CONNECTION_STYLE.into(),
-                    vec![
-                        [0, 0],
-                        [0, y_margin]
-                    ],
-                );
-                excalidraw_file.elements.push(line1);
-                excalidraw_file.elements.push(line2);
-                excalidraw_file.elements.push(line_arrow);
-        }      
-    }
-    
-    let excalidraw_data = serde_json::to_string(&excalidraw_file).unwrap();
-    let output_file = match cli.output_path {
-        Some(file_path) => file_path,
-        None => {
-            let file_name_and_extension = cli.input_path.split('/').last().unwrap().split('.').collect::<Vec<&str>>();
-            format!( "/tmp/{}.excalidraw", file_name_and_extension[0])
+        if !cli.skip_dependencies {
+            for (i, parent) in sorted_container_port.iter().enumerate() {
+                    let x_parent = &parent.0;
+                    let y_parent = &parent.1;
+                    let level_height = y_parent - y;
+                    let interation_x_margin = (i + 1) as i32 * scale;
+                    let line1 = Element::simple_line(
+                        x + interation_x_margin,
+                        *y,
+                        locked,
+                        elements::CONNECTION_STYLE.into(),
+                        vec![
+                            [0, 0],
+                            [0, level_height - height],
+                        ],
+                    );
+                    let line2 = Element::simple_line(
+                        x + interation_x_margin,
+                        *y_parent - height,
+                        locked,
+                        elements::CONNECTION_STYLE.into(),
+                        vec![
+                            [0, 0],
+                            [-*x + x_parent + width - interation_x_margin * 2, 0]
+                        ],
+                    );
+                    let line_arrow = Element::simple_arrow(
+                        *x_parent + width - interation_x_margin,
+                        *y_parent - height,
+                        0,
+                        y_margin,
+                        locked,
+                        elements::CONNECTION_STYLE.into(),
+                        vec![
+                            [0, 0],
+                            [0, y_margin]
+                        ],
+                    );
+                    excalidraw_file.elements.push(line1);
+                    excalidraw_file.elements.push(line2);
+                    excalidraw_file.elements.push(line_arrow);
+            }
         }
-    };
-    fs::write(output_file.clone(), excalidraw_data).expect("Unable to write file");    
-    println!("\nThe excalidraw file is successfully generated and put at '{}'\n", output_file);
+    }
+
+    let excalidraw_data = serde_json::to_string(&excalidraw_file).unwrap();
+    match cli.output_path {
+        Some(output_file_path) => {
+            fs::write(output_file_path.clone(), excalidraw_data).expect("Unable to write file");
+            println!("\nThe input file is '{}'", input_filepath);
+            println!("The excalidraw file is successfully generated and put at '{}'\n", output_file_path);
+        }
+        None => println!("{}", excalidraw_data),
+    }
 }
 
 /// There are several to declare ports in docker-compose
@@ -312,11 +337,41 @@ fn find_additional_width(container_name_len: usize, scale: &i32) -> i32 {
     }
 }
 
-fn read_docker_compose_yaml_file(file_path: &str) -> HashMap<String, serde_yaml::Value> {
-    let mut file = File::open(file_path).unwrap();
+fn parse_docker_compose_yaml(file_path: &str) -> Result<HashMap<String, serde_yaml::Value>, ExcalidockerError> {    
+    let contents = match read_file(file_path) {
+        Ok(contents) => contents,
+        Err(err) => return Err(err),
+    };
+    match serde_yaml::from_str(&contents) {
+        Ok(yaml) => Ok(yaml),
+        Err(err) => return Err(FileFailedParsing {
+            path: file_path.to_string(),
+            msg: err.to_string()
+        })
+    }
+}
+
+fn read_file(file_path: &str) -> Result<String, ExcalidockerError> {
+    if !(file_path.ends_with(".yaml") || file_path.ends_with(".yml")) {
+        return Err(FileIncorrectExtension {
+            path: file_path.to_string(),
+        })
+    }
+    let mut file = match File::open(file_path) {
+        Ok(file) => file,
+        Err(err) => return Err(FileNotFound {
+            path: file_path.to_string(),
+            msg: err.to_string()
+        })
+    };
     let mut contents = String::new();
-    file.read_to_string(&mut contents).unwrap();
-    serde_yaml::from_str(&contents).unwrap()
+    return match file.read_to_string(&mut contents) {
+        Ok(_) => Ok(contents),
+        Err(err) => Err(FileFailedRead {
+            path: file_path.to_string(),
+            msg: err.to_string()
+        })
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
