@@ -258,15 +258,16 @@ fn main() {
     }
     
     let excalidraw_data = serde_json::to_string(&excalidraw_file).unwrap();
-    let output_file = match cli.output_path {
-        Some(file_path) => file_path,
-        None => {
-            let file_name_and_extension = cli.input_path.split('/').last().unwrap().split('.').collect::<Vec<&str>>();
-            format!( "/tmp/{}.excalidraw", file_name_and_extension[0])
-        }
-    };
-    fs::write(output_file.clone(), excalidraw_data).expect("Unable to write file");    
-    println!("\nThe excalidraw file is successfully generated and put at '{}'\n", output_file);
+    // let output_file = match cli.output_path {
+    //     Some(file_path) => file_path,
+    //     None => {
+    //         let file_name_and_extension = cli.input_path.split('/').last().unwrap().split('.').collect::<Vec<&str>>();
+    //         format!( "/tmp/{}.excalidraw", file_name_and_extension[0])
+    //     }
+    // };
+    // fs::write(output_file.clone(), excalidraw_data).expect("Unable to write file");
+    // println!("\nThe excalidraw file is successfully generated and put at '{}'\n", output_file);
+    println!(excalidraw_data);
 }
 
 /// There are several to declare ports in docker-compose
