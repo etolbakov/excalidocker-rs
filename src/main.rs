@@ -1,4 +1,5 @@
 mod exporters;
+mod error;
 
 use clap::{Parser, arg, command};
 use std::collections::HashSet;
@@ -11,6 +12,10 @@ use serde::{Serialize, Deserialize};
 use exporters::excalidraw::{ExcalidrawFile, Element};
 use serde_yaml::Value;
 
+use crate::error::ExcalidockerError::{self,
+    InvalidDockerCompose, FileIncorrectExtension, 
+    FileNotFound, FileFailedRead, FileFailedParsing
+};
 use crate::exporters::excalidraw::elements;
 
 #[derive(Parser)]
@@ -109,9 +114,24 @@ fn main() {
     let mut container_name_to_container_struct = HashMap::new();
 
     let input_filepath = cli.input_path.as_str();
-    let docker_compose_yaml = &read_docker_compose_yaml_file(input_filepath);
-    let services = docker_compose_yaml.get("services").unwrap();
-    
+    let docker_compose_yaml = match parse_docker_compose_yaml(input_filepath) {
+        Ok(yaml_content) => yaml_content,
+        Err(err) => {
+            println!("{}", err);
+            return;
+        },
+    };
+    let services = match docker_compose_yaml.get("services") {
+        Some(services) => services,
+        None => {
+            println!("{}", InvalidDockerCompose { 
+                path: input_filepath.to_string(), 
+                msg: "Failed to get 'services' attribute".to_string()
+            });
+            return;
+        }
+    }; 
+
     for (container_name_val, container_data_val) in services.as_mapping().unwrap() {
         let container_struct = convert_to_container(container_data_val).unwrap();
         let container_name_str = container_name_val.as_str().unwrap();
@@ -257,7 +277,7 @@ fn main() {
             }
         }
     }
-    
+
     let excalidraw_data = serde_json::to_string(&excalidraw_file).unwrap();
     match cli.output_path {
         Some(output_file_path) => {
@@ -317,11 +337,41 @@ fn find_additional_width(container_name_len: usize, scale: &i32) -> i32 {
     }
 }
 
-fn read_docker_compose_yaml_file(file_path: &str) -> HashMap<String, serde_yaml::Value> {
-    let mut file = File::open(file_path).unwrap();
+fn parse_docker_compose_yaml(file_path: &str) -> Result<HashMap<String, serde_yaml::Value>, ExcalidockerError> {    
+    let contents = match read_file(file_path) {
+        Ok(contents) => contents,
+        Err(err) => return Err(err),
+    };
+    match serde_yaml::from_str(&contents) {
+        Ok(yaml) => Ok(yaml),
+        Err(err) => return Err(FileFailedParsing {
+            path: file_path.to_string(),
+            msg: err.to_string()
+        })
+    }
+}
+
+fn read_file(file_path: &str) -> Result<String, ExcalidockerError> {
+    if !(file_path.ends_with(".yaml") || file_path.ends_with(".yml")) {
+        return Err(FileIncorrectExtension {
+            path: file_path.to_string(),
+        })
+    }
+    let mut file = match File::open(file_path) {
+        Ok(file) => file,
+        Err(err) => return Err(FileNotFound {
+            path: file_path.to_string(),
+            msg: err.to_string()
+        })
+    };
     let mut contents = String::new();
-    file.read_to_string(&mut contents).unwrap();
-    serde_yaml::from_str(&contents).unwrap()
+    return match file.read_to_string(&mut contents) {
+        Ok(_) => Ok(contents),
+        Err(err) => Err(FileFailedRead {
+            path: file_path.to_string(),
+            msg: err.to_string()
+        })
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

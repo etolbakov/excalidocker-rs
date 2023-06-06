@@ -14,17 +14,17 @@ An idea of writing this utility originates from Robin Moffatt's [tweet](https://
 ![motivation](./data/img/motivation.png)
 
 ## Usage
-### Docker image
-`excalidocker` is available as a 🐳 [docker image](https://hub.docker.com/r/etolbakov/excalidocker/tags). An image usage example command:
+### 🐳 Docker image
+`excalidocker` is available as a [docker image](https://hub.docker.com/r/etolbakov/excalidocker/tags). Usage example:
  ```sh
-docker run --rm -v "$(pwd)/data/compose/:/tmp/" -e INPUT_PATH=/tmp/docker-compose.yaml etolbakov/excalidocker:0.1.3-20230606 > produced-by-image.excalidraw
+docker run --rm -v "$(pwd)/data/compose/:/tmp/" -e INPUT_PATH=/tmp/docker-compose.yaml etolbakov/excalidocker:latest > produced-by-image.excalidraw
 ```
-The `produced-by-image.excalidraw` file could be opened in [excalidraw](https://excalidraw.com/) and.... hopefully it won't be too shocking 👻 😅.
+The `produced-by-image.excalidraw` file could be opened in [excalidraw](https://excalidraw.com/) and.... hopefully it won't be too scary 👻 😅.
 
-Convert docker-compose files without installing/building. Use it in things like github actions for auto documentation. The sky is the limit.
+Convert docker-compose files without installing/building. Use it in github actions for auto documentation. The sky is the limit.
 
-### Artifact
-Download the latest artifact(🐧 / ) from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it.
+### 📚Artifact
+Download the latest artifact from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it.
 
 To get the `help` menu use:
 ```sh
@@ -43,8 +43,7 @@ Options:
   -h, --help                       Print help
   -V, --version                    Print version
 ```
-
-An artifact usage example command:
+Usage example:
 ```sh
 ./excalidocker --input-path /your/path/docker-compose.yaml --output-path /your/path/result.excalidraw
 ```
@@ -59,26 +58,25 @@ An artifact usage example command:
 >
 > ![mac-warning](./data/img/mac-warning.png)
 
-
 ## Installation
 To build `excalidocker` locally, please follow these steps:
 
 1. Install Rust and Cargo if you haven't already. Refer to the official Rust documentation for [installation instructions](https://www.rust-lang.org/tools/install):
 2. Clone this repository:
-```shell
+```sh
 git clone https://github.com/etolbakov/excalidocker-rs.git
 ```
 3. Build the project using Cargo:
-```shell
+```sh
 cd excalidocker-rs && cargo build --release
 ```
 There is the `make r` command available in the [Makefile](/Makefile) along with other useful command shortcuts.
 
-
 ## Roadmap
 These are the features that I would like to add at some point:
 - 📊 visualize more data from a docker-compose file - volumes, network, etc
-- 🎨 colour output
+- 📜 [config file support](https://github.com/etolbakov/excalidocker-rs/issues/7)
+- ↔️ [use arrows to connect boxes](https://github.com/etolbakov/excalidocker-rs/issues/6)
 - 🦀 various code improvements/enhancements. Feel free to review/suggest if anything could be done better!
 - 👨‍💻 etc
 

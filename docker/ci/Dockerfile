@@ -9,4 +9,4 @@ ADD $TARGETARCH/excalidocker /excalidocker/bin/
 
 ENV PATH /excalidocker/bin/:$PATH
 
-CMD ["sh", "-c", "excalidocker --input-path ${INPUT_PATH}"]
+CMD ["sh", "-c", "excalidocker --input-path ${INPUT_PATH} ${SKIP_DEPS:+ --skip-dependencies}"]
