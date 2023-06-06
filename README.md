@@ -6,11 +6,12 @@ Rust-based utility to convert docker-compose.yaml files into [excalidraw](https:
 1. [Motivation](#motivation) 
 2. [Usage](#usage) 
 3. [Installation](#installation)
-4. [Contributing](#Contributing)
+4. [Contributing](#contributing)
 5. [Roadmap](#roadmap)
 
 ## Motivation
-TODO...
+I was looking for an idea to play a bit with Rust and found [this tweet](https://twitter.com/rmoff/status/1659214185220423685) by Robin Moffatt.
+![motivation](./data/img/motivation.png)
 
 ## Usage
 0. Download the latest artifact from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it. 

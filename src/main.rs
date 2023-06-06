@@ -267,7 +267,7 @@ fn main() {
     // };
     // fs::write(output_file.clone(), excalidraw_data).expect("Unable to write file");
     // println!("\nThe excalidraw file is successfully generated and put at '{}'\n", output_file);
-    println!(excalidraw_data);
+    println!("{}", excalidraw_data);
 }
 
 /// There are several to declare ports in docker-compose
