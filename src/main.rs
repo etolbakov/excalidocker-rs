@@ -26,7 +26,7 @@ struct Cli {
     #[arg(short, long, default_value_t = false)]
     skip_dependencies: bool,
     /// file path for the output excalidraw file.
-    /// By default a file is be stored under "/tmp/<docker-compose-file-name>.excalidraw"
+    /// By default the file content is sent to console output
     #[arg(short, long)]
     output_path: Option<String>,
 }
@@ -107,8 +107,9 @@ fn main() {
     let mut container_name_to_point = HashMap::new();
     let mut container_name_to_parents: HashMap<&str, DependencyComponent> = HashMap::new();
     let mut container_name_to_container_struct = HashMap::new();
-    
-    let docker_compose_yaml = &read_docker_compose_yaml_file(cli.input_path.as_str());
+
+    let input_filepath = cli.input_path.as_str();
+    let docker_compose_yaml = &read_docker_compose_yaml_file(input_filepath);
     let services = docker_compose_yaml.get("services").unwrap();
     
     for (container_name_val, container_data_val) in services.as_mapping().unwrap() {
@@ -258,16 +259,14 @@ fn main() {
     }
     
     let excalidraw_data = serde_json::to_string(&excalidraw_file).unwrap();
-    // let output_file = match cli.output_path {
-    //     Some(file_path) => file_path,
-    //     None => {
-    //         let file_name_and_extension = cli.input_path.split('/').last().unwrap().split('.').collect::<Vec<&str>>();
-    //         format!( "/tmp/{}.excalidraw", file_name_and_extension[0])
-    //     }
-    // };
-    // fs::write(output_file.clone(), excalidraw_data).expect("Unable to write file");
-    // println!("\nThe excalidraw file is successfully generated and put at '{}'\n", output_file);
-    println!("{}", excalidraw_data);
+    match cli.output_path {
+        Some(output_file_path) => {
+            fs::write(output_file_path.clone(), excalidraw_data).expect("Unable to write file");
+            println!("\nThe input file is '{}'", input_filepath);
+            println!("The excalidraw file is successfully generated and put at '{}'\n", output_file_path);
+        }
+        None => println!("{}", excalidraw_data),
+    }
 }
 
 /// There are several to declare ports in docker-compose
