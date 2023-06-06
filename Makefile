@@ -52,4 +52,6 @@ e4ios:
 	./target/release/excalidocker --skip-dependencies --input-path ./data/compose/docker-compose-very-large.yaml --output-path $(shell pwd)/docker-compose-very-large.excalidraw
 
 d5i:
-	docker run --rm -v "$(current_dir)/data/compose/:/tmp/" -e INPUT_PATH=/tmp/docker-compose.yaml etolbakov/excalidocker:0.1.3-20230606 > produced-by-image.excalidraw
+	docker run --rm -v "$(current_dir)/data/compose/:/tmp/" -e INPUT_PATH=/tmp/docker-compose.yaml etolbakov/excalidocker:latest > produced-by-image.excalidraw
+d5is:
+	docker run --rm -v "$(current_dir)/data/compose/:/tmp/" -e INPUT_PATH=/tmp/docker-compose.yaml -e SKIP_DEPS=true etolbakov/excalidocker:latest > produced-by-image-no-deps.excalidraw

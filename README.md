@@ -15,13 +15,18 @@ An idea of writing this utility originates from Robin Moffatt's [tweet](https://
 
 ## Usage
 ### 🐳 Docker image
-`excalidocker` is available as a [docker image](https://hub.docker.com/r/etolbakov/excalidocker/tags). Usage example:
+`excalidocker` is available as a [docker image](https://hub.docker.com/r/etolbakov/excalidocker/tags).
+Convert docker-compose files without installing/building. Use it in Github actions for auto documentation. 
+The sky is the limit.Get the latest image from [docker hub](https://hub.docker.com/r/etolbakov/excalidocker): 
+```sh
+docker pull etolbakov/excalidocker
+```
+Usage example:
  ```sh
 docker run --rm -v "$(pwd)/data/compose/:/tmp/" -e INPUT_PATH=/tmp/docker-compose.yaml etolbakov/excalidocker:latest > produced-by-image.excalidraw
 ```
 The `produced-by-image.excalidraw` file could be opened in [excalidraw](https://excalidraw.com/) and.... hopefully it won't be too scary 👻 😅.
-
-Convert docker-compose files without installing/building. Use it in github actions for auto documentation. The sky is the limit.
+More command examples are in the [Makefile](/Makefile).
 
 ### 📚Artifact
 Download the latest artifact from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it.
@@ -82,7 +87,7 @@ These are the features that I would like to add at some point:
 
 ## Contributing
 
-Contributions are welcome! If you encounter any issues or have suggestions for improvements, please open an issue or submit a pull request.
+Contributions are welcome! If you encounter any issues, have suggestions for improvements or would like to [participate](https://github.com/etolbakov/excalidocker-rs/issues) please open an issue or submit a pull request.
 
 ## License
 
