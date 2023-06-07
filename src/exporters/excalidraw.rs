@@ -50,6 +50,7 @@ pub enum Element {
         y: i32,
         width: i32,
         height: i32,
+        group_ids: Vec<String>,
         angle: i32,
         stroke_color: String,
         background_color: String,
@@ -131,6 +132,7 @@ pub enum Element {
         y: i32,
         width: i32,
         height: i32,
+        group_ids: Vec<String>,
         angle: i32,
         stroke_color: String,
         background_color: String,
@@ -178,6 +180,7 @@ impl Element {
         y: i32,
         width: i32,
         height: i32,
+        group_ids: Vec<String>,
         angle: i32,
         stroke_color: String,
         background_color: String,
@@ -198,6 +201,7 @@ impl Element {
             y,
             width,
             height,
+            group_ids,
             angle,
             stroke_color,
             background_color,
@@ -335,6 +339,7 @@ impl Element {
         y: i32,
         width: i32,
         height: i32,
+        group_ids: Vec<String>,
         angle: i32,
         stroke_color: String,
         background_color: String,
@@ -350,6 +355,7 @@ impl Element {
             y,
             width,
             height,
+            group_ids,
             angle,
             stroke_color,
             background_color,
@@ -363,12 +369,13 @@ impl Element {
         }
     }
     
-    pub fn draw_ellipse(x: i32, y: i32, width: i32, height: i32, locked: bool) -> Self {        
+    pub fn draw_ellipse(x: i32, y: i32, width: i32, height: i32, group_ids: Vec<String>, locked: bool) -> Self {        
         Self::ellipse(
             x,
             y,
             width,
             height,
+            group_ids,
             elements::ANGLE,
             elements::STROKE_COLOR.into(),
             elements::BACKGROUND_COLOR.into(),
@@ -381,12 +388,13 @@ impl Element {
         )
     }
 
-    pub fn draw_small_monospaced_text(x: i32, y: i32, locked: bool, text: String) -> Self {
+    pub fn draw_small_monospaced_text(x: i32, y: i32, group_ids: Vec<String>, locked: bool, text: String) -> Self {
         Self::text(
             x,
             y,
             (4 + text.chars().count() * 9) as i32,
             (text.lines().count() * 19) as i32,
+            group_ids,
             0,
             elements::STROKE_COLOR.into(),
             elements::BACKGROUND_COLOR.into(),

@@ -2,11 +2,13 @@ mod exporters;
 mod error;
 
 use clap::{Parser, arg, command};
+use exporters::excalidraw::BoundElement;
 use std::collections::HashSet;
 use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io::Read;
+use std::vec;
 
 use serde::{Serialize, Deserialize};
 use exporters::excalidraw::{ExcalidrawFile, Element};
@@ -16,12 +18,13 @@ use crate::error::ExcalidockerError::{self,
     InvalidDockerCompose, FileIncorrectExtension, 
     FileNotFound, FileFailedRead, FileFailedParsing
 };
+use crate::exporters::excalidraw::Binding;
 use crate::exporters::excalidraw::elements;
 
 #[derive(Parser)]
 #[command(name = "Excalidocker")]
 #[command(author = "Evgeny Tolbakov <ev.tolbakov@gmail.com>")]
-#[command(version = "0.1.3")]
+#[command(version = "0.1.4")]
 #[command(about = "Utility to convert docker-compose into excalidraw", long_about = None)]
 struct Cli {
     /// file path to the docker-compose.yaml
@@ -150,30 +153,37 @@ fn main() {
         container_name_to_parents.insert(container_name_str, dependency_component);
         container_name_to_container_struct.insert(container_name_str, container_struct);
     }
-    // dbg!(container_name_to_container_struct.clone());
-    // dbg!(components.clone());
-
     let containers_traversal_order = find_containers_traversal_order(container_name_to_parents);
 
+    let mut general_id_xxx = 1;
     for cn_name in containers_traversal_order { 
         let container_width = width + find_additional_width(cn_name.as_str().len(), &scale);
         
         let container_struct = container_name_to_container_struct.get(cn_name.as_str()).unwrap();
         container_name_to_point.insert(cn_name.clone(), ContainerPoint::new(x, y));
 
-        // ------------ Draw container ------------
+        let bound_elements = vec![BoundElement{
+            id: "555".to_string(), 
+            element_type: "arrow".to_string()
+        }];
+        // ------------ Draw container ------------        
         let container_rectangle = Element::simple_rectangle(
+            general_id_xxx.to_string(),
             x,
             y,
             container_width,
             height,
+            bound_elements,
             locked,
         );
+        general_id_xxx+=1;
+
         let container_text = Element::draw_small_monospaced_text(
             x + scale,
             y + scale,
+            vec![],
             locked,
-            cn_name,
+            cn_name.clone(),
         );
 
         // ------------ Draw ports ------------
@@ -182,22 +192,26 @@ fn main() {
             let container_x = x + (i as i32 * 80);
             let container_y = y + scale * 8;
             let (host_port_str, container_port_str) = extract_host_container_ports(port);
+            let group_ids = vec![format!("{}_{}",cn_name, i)];
             let container_port = Element::draw_ellipse (
                 container_x,
                 container_y,
                 port_diameter, 
                 port_diameter, 
+                group_ids.clone(),
                 locked,
             ); 
 
             let host_port_text = Element::draw_small_monospaced_text(
                 container_x + 15,
                 container_y + 20,
+                group_ids,
                 locked,
                 host_port_str.clone(),
             );
-
+            general_id +=1;
             let simple_arrow = Element::simple_arrow(
+                general_id.to_string(),
                 x + 70,
                 y + 60,
                 200,
@@ -208,11 +222,22 @@ fn main() {
                     [0, 0],
                     [(i as i32 * 80) - 35, (i as i32 + 100)]
                 ],
+                Binding{
+                    element_id: "5".to_string(),
+                    focus: 0.7142857142857143,
+                    gap: 1,
+                },
+                Binding{
+                    element_id: "6".to_string(),
+                    focus: -0.7142857142857143,
+                    gap: 1,
+                },
             );
             if host_port_str != container_port_str {
                 let container_port_text = Element::draw_small_monospaced_text(
                     x + 20 + (i as i32 * 80),
                     y + 80,
+                    vec![],
                     locked,
                     container_port_str,
                 );
@@ -252,7 +277,9 @@ fn main() {
                     [0, level_height - height],
                     [-*x + x_parent + width - interation_x_margin * 2, level_height - height],
                     [-*x + x_parent + width - interation_x_margin * 2, *y_parent - y]                    ];
+                
                 let connecting_arrow = Element::simple_arrow(
+                    "555".to_string(),
                     x + interation_x_margin,
                     *y,
                     0,
@@ -260,6 +287,16 @@ fn main() {
                     locked,
                     elements::CONNECTION_STYLE.into(),
                     connecting_arrow_points,
+                    Binding{
+                        element_id: "2".to_string(),
+                        focus: -0.7142857142857143,
+                        gap: 1
+                    },
+                    Binding{
+                        element_id: "1".to_string(),
+                        focus: 0.7142857142857143,
+                        gap: 1
+                    },
                 );
                 excalidraw_file.elements.push(connecting_arrow);
         }
