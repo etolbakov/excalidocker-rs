@@ -239,41 +239,76 @@ fn main() {
                     let y_parent = &parent.1;
                     let level_height = y_parent - y;
                     let interation_x_margin = (i + 1) as i32 * scale;
+                    
+                    let line1_points = vec![
+                            [0, 0],
+                            [0, level_height - height],
+                        ];
+                    let line1_x = x + interation_x_margin;                                
+                    dbg!(line1_points.clone());
+                    dbg!(line1_x.clone());
+                    dbg!(y);
+
                     let line1 = Element::simple_line(
-                        x + interation_x_margin,
+                        line1_x,
                         *y,
                         locked,
                         elements::CONNECTION_STYLE.into(),
-                        vec![
-                            [0, 0],
-                            [0, level_height - height],
-                        ],
+                        line1_points,
                     );
-                    let line2 = Element::simple_line(
-                        x + interation_x_margin,
-                        *y_parent - height,
-                        locked,
-                        elements::CONNECTION_STYLE.into(),
-                        vec![
+                    let line2_points = vec![
                             [0, 0],
                             [-*x + x_parent + width - interation_x_margin * 2, 0]
-                        ],
-                    );
+                        ];
+                    let line2_x = x + interation_x_margin;
+                    let line2_y = *y_parent - height;
+                    dbg!(line2_points.clone());
+                    dbg!(line2_x.clone());
+                    dbg!(line2_y.clone());
+                    let line2 = Element::simple_line(
+                        line2_x,
+                        line2_y,
+                        locked,
+                        elements::CONNECTION_STYLE.into(),
+                        line2_points,
+                    );                    
+                    let arrow_points = vec![
+                            [0, 0],
+                            [0, y_margin]
+                        ];                    
+                    let arrow_x = *x_parent + width - interation_x_margin;
+                    let arrow_y = *y_parent - height;
+                    dbg!(arrow_points.clone());
+                    dbg!(arrow_x.clone());
+                    dbg!(arrow_y.clone());
                     let line_arrow = Element::simple_arrow(
-                        *x_parent + width - interation_x_margin,
-                        *y_parent - height,
+                        arrow_x,
+                        arrow_y,
                         0,
                         y_margin,
                         locked,
                         elements::CONNECTION_STYLE.into(),
-                        vec![
-                            [0, 0],
-                            [0, y_margin]
-                        ],
+                        arrow_points,
                     );
-                    excalidraw_file.elements.push(line1);
-                    excalidraw_file.elements.push(line2);
-                    excalidraw_file.elements.push(line_arrow);
+                    // excalidraw_file.elements.push(line1);
+                    // excalidraw_file.elements.push(line2);
+                    // excalidraw_file.elements.push(line_arrow);
+                    
+                    let connecting_arrow_points = vec![
+                        [0, 0],
+                        [0, level_height - height],
+                        [-*x + x_parent + width - interation_x_margin * 2, level_height - height],
+                        [-*x + x_parent + width - interation_x_margin * 2, *y_parent - y]                    ]; 
+                    let connecting_arrow = Element::simple_arrow(
+                        line1_x.clone(),
+                        *y,
+                        0,
+                        y_margin,
+                        locked,
+                        elements::CONNECTION_STYLE.into(),
+                        connecting_arrow_points,
+                    );
+                    excalidraw_file.elements.push(connecting_arrow);
             }
         }
     }
