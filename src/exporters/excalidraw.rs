@@ -3,6 +3,22 @@ use serde_json::{Map, Value};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct BoundElement {
+    pub id: String,
+    #[serde(rename = "type")]
+    pub element_type: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Binding {
+    pub element_id: String,
+    pub focus: f32,
+    pub gap: u16,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ExcalidrawFile {
     pub r#type: String,
     pub version: i32,
@@ -71,6 +87,7 @@ pub enum Element {
     },
     #[serde(rename_all = "camelCase")]
     Arrow {
+        id: String,
         x: i32,
         y: i32,
         width: i32,
@@ -83,16 +100,20 @@ pub enum Element {
         stroke_style: String,
         roughness: i32,
         opacity: i32,
+        start_binding: Binding,
+        end_binding: Binding,
         stroke_sharpness: String,
         locked: bool,
         points: Vec<[i32; 2]>,
     },
     #[serde(rename_all = "camelCase")]
     Rectangle {
+        id: String,
         x: i32,
         y: i32,
         width: i32,
         height: i32,
+        bound_elements: Vec<BoundElement>,
         angle: i32,
         stroke_color: String,
         background_color: String,
@@ -232,10 +253,13 @@ impl Element {
     }
 
     pub fn arrow(
+        id: String,
         x: i32,
         y: i32,
         width: i32,
         height: i32,
+        start_binding: Binding,
+        end_binding: Binding,
         angle: i32,
         stroke_color: String,
         background_color: String,
@@ -248,10 +272,13 @@ impl Element {
         points: Vec<[i32; 2]>,
     ) -> Self {
         Self::Arrow {
+            id,
             x,
             y,
             width,
             height,
+            start_binding,
+            end_binding,
             angle,
             stroke_color,
             background_color,
@@ -267,10 +294,12 @@ impl Element {
     }
 
     pub fn rectangle(
+        id: String,
         x: i32,
         y: i32,
         width: i32,
         height: i32,
+        bound_elements: Vec<BoundElement>,
         angle: i32,
         stroke_color: String,
         background_color: String,
@@ -282,10 +311,12 @@ impl Element {
         locked: bool,
     ) -> Self {
         Self::Rectangle {
+            id,
             x,
             y,
             width,
             height,
+            bound_elements,
             angle,
             stroke_color,
             background_color,
@@ -410,12 +441,17 @@ impl Element {
         )
     }
 
-    pub fn simple_arrow(x: i32, y: i32,  width: i32, height: i32, locked: bool, stroke_style: String, points: Vec<[i32; 2]>) -> Self {
+    pub fn simple_arrow(id: String, x: i32, y: i32,  width: i32, height: i32, locked: bool, stroke_style: String, points: Vec<[i32; 2]>,
+        start_binding: Binding,
+        end_binding: Binding) -> Self {
         Self::arrow(
+            id,
             x,
             y,
             width, // TODO 
             height,
+            start_binding,
+            end_binding,
             elements::ANGLE,
             elements::STROKE_COLOR.into(),
             elements::BACKGROUND_COLOR.into(),
@@ -429,12 +465,14 @@ impl Element {
         )
     }
 
-    pub fn simple_rectangle(x: i32, y: i32, width: i32, height: i32, locked: bool) -> Self {
+    pub fn simple_rectangle(id: String, x: i32, y: i32, width: i32, height: i32, bound_elements: Vec<BoundElement>, locked: bool) -> Self {
         Self::rectangle(
+            id,
             x,
             y,
             width,
             height,
+            bound_elements,
             elements::ANGLE,
             elements::STROKE_COLOR.into(),
             elements::BACKGROUND_COLOR.into(),
