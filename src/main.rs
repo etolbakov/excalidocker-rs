@@ -54,6 +54,7 @@ struct DependencyComponent {
 impl DependencyComponent {
     fn new(name: String) -> Self {
         Self {
+            // id: id.to_string(),
             name,
             parent: Vec::new(),
         }
@@ -131,9 +132,10 @@ fn main() {
             return;
         }
     }; 
-
+    let mut general_id = 0;
     for (container_name_val, container_data_val) in services.as_mapping().unwrap() {
-        let container_struct = convert_to_container(container_data_val).unwrap();
+        general_id+=1;
+        let container_struct = convert_to_container(general_id, container_data_val).unwrap();
         let container_name_str = container_name_val.as_str().unwrap();
 
         let mut dependency_component = DependencyComponent::new(container_name_str.to_string());                
@@ -148,6 +150,8 @@ fn main() {
         container_name_to_parents.insert(container_name_str, dependency_component);
         container_name_to_container_struct.insert(container_name_str, container_struct);
     }
+    // dbg!(container_name_to_container_struct.clone());
+    // dbg!(components.clone());
 
     let containers_traversal_order = find_containers_traversal_order(container_name_to_parents);
 
@@ -228,88 +232,36 @@ fn main() {
     }   
     for DependencyComponent {name, parent} in &components {
         let ContainerPoint(x, y) = container_name_to_point.get(name).unwrap();
-        let mut sorted_container_port = parent
-            .iter()
-            .map(|dc| container_name_to_point.get(&dc.name).unwrap())
-            .collect::<Vec<&ContainerPoint>>();
+        let mut sorted_container_port = if cli.skip_dependencies {
+            Vec::<&ContainerPoint>::new()
+        } else {
+            parent
+                .iter()
+                .map(|dc| container_name_to_point.get(&dc.name).unwrap())
+                .collect::<Vec<&ContainerPoint>>()
+        };
         sorted_container_port.sort_by(|cp1, cp2| cp2.1.cmp(&cp1.1));
-        if !cli.skip_dependencies {
-            for (i, parent) in sorted_container_port.iter().enumerate() {
-                    let x_parent = &parent.0;
-                    let y_parent = &parent.1;
-                    let level_height = y_parent - y;
-                    let interation_x_margin = (i + 1) as i32 * scale;
-                    
-                    let line1_points = vec![
-                            [0, 0],
-                            [0, level_height - height],
-                        ];
-                    let line1_x = x + interation_x_margin;                                
-                    dbg!(line1_points.clone());
-                    dbg!(line1_x.clone());
-                    dbg!(y);
-
-                    let line1 = Element::simple_line(
-                        line1_x,
-                        *y,
-                        locked,
-                        elements::CONNECTION_STYLE.into(),
-                        line1_points,
-                    );
-                    let line2_points = vec![
-                            [0, 0],
-                            [-*x + x_parent + width - interation_x_margin * 2, 0]
-                        ];
-                    let line2_x = x + interation_x_margin;
-                    let line2_y = *y_parent - height;
-                    dbg!(line2_points.clone());
-                    dbg!(line2_x.clone());
-                    dbg!(line2_y.clone());
-                    let line2 = Element::simple_line(
-                        line2_x,
-                        line2_y,
-                        locked,
-                        elements::CONNECTION_STYLE.into(),
-                        line2_points,
-                    );                    
-                    let arrow_points = vec![
-                            [0, 0],
-                            [0, y_margin]
-                        ];                    
-                    let arrow_x = *x_parent + width - interation_x_margin;
-                    let arrow_y = *y_parent - height;
-                    dbg!(arrow_points.clone());
-                    dbg!(arrow_x.clone());
-                    dbg!(arrow_y.clone());
-                    let line_arrow = Element::simple_arrow(
-                        arrow_x,
-                        arrow_y,
-                        0,
-                        y_margin,
-                        locked,
-                        elements::CONNECTION_STYLE.into(),
-                        arrow_points,
-                    );
-                    // excalidraw_file.elements.push(line1);
-                    // excalidraw_file.elements.push(line2);
-                    // excalidraw_file.elements.push(line_arrow);
-                    
-                    let connecting_arrow_points = vec![
-                        [0, 0],
-                        [0, level_height - height],
-                        [-*x + x_parent + width - interation_x_margin * 2, level_height - height],
-                        [-*x + x_parent + width - interation_x_margin * 2, *y_parent - y]                    ]; 
-                    let connecting_arrow = Element::simple_arrow(
-                        line1_x.clone(),
-                        *y,
-                        0,
-                        y_margin,
-                        locked,
-                        elements::CONNECTION_STYLE.into(),
-                        connecting_arrow_points,
-                    );
-                    excalidraw_file.elements.push(connecting_arrow);
-            }
+        
+        for (i, parent) in sorted_container_port.iter().enumerate() {
+                let x_parent = &parent.0;
+                let y_parent = &parent.1;
+                let level_height = y_parent - y;
+                let interation_x_margin = (i + 1) as i32 * scale;
+                let connecting_arrow_points = vec![
+                    [0, 0],
+                    [0, level_height - height],
+                    [-*x + x_parent + width - interation_x_margin * 2, level_height - height],
+                    [-*x + x_parent + width - interation_x_margin * 2, *y_parent - y]                    ];
+                let connecting_arrow = Element::simple_arrow(
+                    x + interation_x_margin,
+                    *y,
+                    0,
+                    y_margin,
+                    locked,
+                    elements::CONNECTION_STYLE.into(),
+                    connecting_arrow_points,
+                );
+                excalidraw_file.elements.push(connecting_arrow);
         }
     }
 
@@ -411,6 +363,7 @@ fn read_file(file_path: &str) -> Result<String, ExcalidockerError> {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct DockerContainer {
+    id: String,
     image: String,
     command: Option<String>,
     environment: Option<HashMap<String, String>>,
@@ -420,9 +373,10 @@ struct DockerContainer {
     // TODO: add other fields
 }
 
-fn convert_to_container(value: &Value) -> Option<DockerContainer> {
+fn convert_to_container(id: i32, value: &Value) -> Option<DockerContainer> {
     let mapping = value.as_mapping()?;
     let mut container = DockerContainer {
+        id: id.to_string(),
         image: String::new(),
         command: None,
         environment: None,
@@ -481,21 +435,21 @@ fn convert_to_container(value: &Value) -> Option<DockerContainer> {
 }
 
                 
-#[test]
-fn check_parsing() {
-    let file_path = "docker-compose.yaml";
-    // let file_path = "docker-compose-simple.yaml";
-    let mut file = File::open(file_path).unwrap();
-    let mut contents = String::new();
-    file.read_to_string(&mut contents).unwrap();
+// #[test]
+// fn check_parsing() {
+//     let file_path = "docker-compose.yaml";
+//     // let file_path = "docker-compose-simple.yaml";
+//     let mut file = File::open(file_path).unwrap();
+//     let mut contents = String::new();
+//     file.read_to_string(&mut contents).unwrap();
 
-    let docker_compose: HashMap<String, serde_yaml::Value> = serde_yaml::from_str(&contents).unwrap();
-    let value = docker_compose.get("services").unwrap();
-    for (k, v) in value.as_mapping().unwrap() {
-        let convert_to_container = convert_to_container(v);
-        dbg!(convert_to_container);
-    }
-}
+//     let docker_compose: HashMap<String, serde_yaml::Value> = serde_yaml::from_str(&contents).unwrap();
+//     let value = docker_compose.get("services").unwrap();
+//     for (k, v) in value.as_mapping().unwrap() {
+//         let convert_to_container = convert_to_container(v);
+//         dbg!(convert_to_container);
+//     }
+// }
           
 #[test]
 fn check_port_parsing() {
