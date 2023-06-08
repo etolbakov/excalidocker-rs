@@ -3,6 +3,7 @@ mod error;
 
 use clap::{Parser, arg, command};
 use exporters::excalidraw::BoundElement;
+use rand::{distributions::Alphanumeric, Rng};
 use std::collections::HashSet;
 use std::collections::HashMap;
 use std::fs;
@@ -39,25 +40,26 @@ struct Cli {
     output_path: Option<String>,
 }
 
-#[derive(Debug,Clone,Copy)]
-struct ContainerPoint(i32, i32);
+#[derive(Debug,Clone)]
+struct ContainerPoint(String, i32, i32);
 
 impl ContainerPoint {
-    fn new(x: i32, y: i32) -> Self {
-        Self(x, y)
-    }
+    fn new(name: String, x: i32, y: i32) -> Self {
+        Self(name, x, y)
+    } 
 }
 
 #[derive(Debug, Clone)]
 struct DependencyComponent {
+    id: String,
     name: String,
     parent: Vec<DependencyComponent>,
 }
 
 impl DependencyComponent {
-    fn new(name: String) -> Self {
+    fn new(id: String, name: String) -> Self {
         Self {
-            // id: id.to_string(),
+            id,
             name,
             parent: Vec::new(),
         }
@@ -96,6 +98,16 @@ fn traverse_in_hierarchy(
 //         }
 //     }
 
+#[derive(Debug, Clone)]
+struct RectangleTempStruct {
+    pub id: String, 
+    pub x: i32, 
+    pub y: i32, 
+    pub width: i32, 
+    pub height: i32, 
+    pub group_ids: Vec<String>, 
+    pub bound_elements: Vec<BoundElement>,
+}
    
 
 fn main() {
@@ -113,12 +125,14 @@ fn main() {
     let y_margin = 60;
 
     let mut components = Vec::new();
+    let mut container_name_rectangle_temp_structs = HashMap::new();
     let mut container_name_to_point = HashMap::new();
     let mut container_name_to_parents: HashMap<&str, DependencyComponent> = HashMap::new();
     let mut container_name_to_container_struct = HashMap::new();
+    // let mut container_name_to_excalidraw_element = HashMap::new();
 
     let input_filepath = cli.input_path.as_str();
-    let docker_compose_yaml = match parse_docker_compose_yaml(input_filepath) {
+    let docker_compose_yaml = match parse_yaml_file(input_filepath) {
         Ok(yaml_content) => yaml_content,
         Err(err) => {
             println!("{}", err);
@@ -135,56 +149,70 @@ fn main() {
             return;
         }
     }; 
-    let mut general_id = 0;
+    let mut identifier: i32 = 1;
     for (container_name_val, container_data_val) in services.as_mapping().unwrap() {
-        general_id+=1;
-        let container_struct = convert_to_container(general_id, container_data_val).unwrap();
+        let container_id = format!("container_{}", identifier);
+        let container_struct = convert_to_container(container_id.clone(), container_data_val).unwrap();
         let container_name_str = container_name_val.as_str().unwrap();
 
-        let mut dependency_component = DependencyComponent::new(container_name_str.to_string());                
+        let mut dependency_component = DependencyComponent::new(container_id, container_name_str.to_string());                
         if let Some(dependencies) = &container_struct.depends_on {
             dependencies
             .iter()
-            .for_each(|s|
-                dependency_component.parent.push(DependencyComponent::new(s.to_string()))
+            .for_each(|name|
+                dependency_component.parent.push(DependencyComponent::new("".to_string(), name.to_string()))
             );
         } 
         components.push(dependency_component.clone());
         container_name_to_parents.insert(container_name_str, dependency_component);
         container_name_to_container_struct.insert(container_name_str, container_struct);
+        identifier+=1;
     }
+
     let containers_traversal_order = find_containers_traversal_order(container_name_to_parents);
 
-    let mut general_id_xxx = 1;
     for cn_name in containers_traversal_order { 
         let container_width = width + find_additional_width(cn_name.as_str().len(), &scale);
         
         let container_struct = container_name_to_container_struct.get(cn_name.as_str()).unwrap();
-        container_name_to_point.insert(cn_name.clone(), ContainerPoint::new(x, y));
-
-        let bound_elements = vec![BoundElement{
-            id: "555".to_string(), 
-            element_type: "arrow".to_string()
-        }];
-        // ------------ Draw container ------------        
-        let container_rectangle = Element::simple_rectangle(
-            general_id_xxx.to_string(),
+        container_name_to_point.insert(cn_name.clone(), ContainerPoint::new(cn_name.clone(), x, y));
+        
+        // let bound_elements = vec![BoundElement{
+        //     id: "555".to_string(), 
+        //     element_type: "arrow".to_string()
+        // }];
+        
+        // ------------ Draw container ------------
+        let container_group = vec![format!("group_{}_container_{}_id",cn_name, container_struct.id)];
+       
+        // let container_rectangle = Element::simple_rectangle(
+        //     container_struct.id.clone(),
+        //     x,
+        //     y,
+        //     container_width,
+        //     height,
+        //     container_group.clone(),
+        //     vec![], // bound_elements,
+        //     locked,
+        // );
+        let mut rectangle_temp_struct = RectangleTempStruct {
+            id: container_struct.id.clone(),
             x,
             y,
-            container_width,
+            width,
             height,
-            bound_elements,
-            locked,
-        );
-        general_id_xxx+=1;
+            group_ids: container_group.clone(),
+            bound_elements: vec![],
+        };
 
         let container_text = Element::draw_small_monospaced_text(
             x + scale,
             y + scale,
-            vec![],
+            container_group.clone(),
             locked,
             cn_name.clone(),
         );
+        // container_name_to_excalidraw_element.insert(cn_name.clone(), container_rectangle.clone());
 
         // ------------ Draw ports ------------
         let ports = container_struct.clone().ports.unwrap_or(Vec::new()); 
@@ -192,26 +220,34 @@ fn main() {
             let container_x = x + (i as i32 * 80);
             let container_y = y + scale * 8;
             let (host_port_str, container_port_str) = extract_host_container_ports(port);
-            let group_ids = vec![format!("{}_{}",cn_name, i)];
-            let container_port = Element::draw_ellipse (
+            let ellipse_port_group = vec![format!("group_{}_hostport_{}_text",cn_name, i)];
+
+            let ellipse_host_port_id = format!("ellipse_{}", generate_random_string_id());
+            let host_port_arrow_id = format!("port_arrow_{}",generate_random_string_id());
+
+            let host_port = Element::draw_ellipse (
+                ellipse_host_port_id.clone(), 
                 container_x,
                 container_y,
                 port_diameter, 
                 port_diameter, 
-                group_ids.clone(),
+                ellipse_port_group.clone(),
+                vec![BoundElement{
+                    id: host_port_arrow_id.clone(), 
+                    element_type: "arrow".to_string()
+                }],
                 locked,
             ); 
-
             let host_port_text = Element::draw_small_monospaced_text(
                 container_x + 15,
                 container_y + 20,
-                group_ids,
+                ellipse_port_group.clone(),
                 locked,
                 host_port_str.clone(),
             );
-            general_id +=1;
-            let simple_arrow = Element::simple_arrow(
-                general_id.to_string(),
+
+            let host_port_arrow = Element::simple_arrow(
+                host_port_arrow_id.clone(),
                 x + 70,
                 y + 60,
                 200,
@@ -222,64 +258,80 @@ fn main() {
                     [0, 0],
                     [(i as i32 * 80) - 35, (i as i32 + 100)]
                 ],
-                Binding{
-                    element_id: "5".to_string(),
-                    focus: 0.7142857142857143,
+                Binding {
+                    element_id: container_struct.id.clone(),
+                    focus: 0.05,
                     gap: 1,
                 },
-                Binding{
-                    element_id: "6".to_string(),
-                    focus: -0.7142857142857143,
+                Binding {
+                    element_id: ellipse_host_port_id,
+                    focus: 0.05,
                     gap: 1,
                 },
             );
+
+            // bind the port arrow to the container
+            rectangle_temp_struct.bound_elements.push(BoundElement{
+                id: host_port_arrow_id.to_string(), 
+                element_type: "arrow".to_string()
+            });
+
             if host_port_str != container_port_str {
                 let container_port_text = Element::draw_small_monospaced_text(
                     x + 20 + (i as i32 * 80),
                     y + 80,
-                    vec![],
+                    container_group.clone(),
                     locked,
                     container_port_str,
                 );
                 excalidraw_file.elements.push(container_port_text);
             }
-            excalidraw_file.elements.push(container_port);
+            excalidraw_file.elements.push(host_port);
             excalidraw_file.elements.push(host_port_text);
-            excalidraw_file.elements.push(simple_arrow);
+            excalidraw_file.elements.push(host_port_arrow);
         }
 
         // ------------ Draw 'depends_on' relationship ------------
-        excalidraw_file.elements.push(container_rectangle);
+        // excalidraw_file.elements.push(container_rectangle); // TODO postponing
         excalidraw_file.elements.push(container_text);
         
         x += container_width + x_margin;
         y += y_margin;
-    }   
-    for DependencyComponent {name, parent} in &components {
-        let ContainerPoint(x, y) = container_name_to_point.get(name).unwrap();
-        let mut sorted_container_port = if cli.skip_dependencies {
-            Vec::<&ContainerPoint>::new()
+        container_name_rectangle_temp_structs.insert(cn_name, rectangle_temp_struct);     
+    }
+
+    for DependencyComponent {id, name, parent} in &components {
+        let ContainerPoint(_, x, y) = container_name_to_point.get(name).unwrap();
+        let mut sorted_container_points = if cli.skip_dependencies {
+            Vec::<ContainerPoint>::new()
         } else {
             parent
                 .iter()
-                .map(|dc| container_name_to_point.get(&dc.name).unwrap())
-                .collect::<Vec<&ContainerPoint>>()
+                .map(|dc| {
+                    let x1 = container_name_to_point.get(&dc.name).unwrap();
+                    ContainerPoint::new(dc.name.clone(), x1.1, x1.2)
+                })
+                .collect::<Vec<ContainerPoint>>()
         };
-        sorted_container_port.sort_by(|cp1, cp2| cp2.1.cmp(&cp1.1));
+        sorted_container_points.sort_by(|cp1, cp2| cp2.1.cmp(&cp1.1));
         
-        for (i, parent) in sorted_container_port.iter().enumerate() {
-                let x_parent = &parent.0;
-                let y_parent = &parent.1;
+        for (i, parent_point) in sorted_container_points.iter().enumerate() {
+                let parent_name = &parent_point.0;
+                let mut parent_temp_struct = container_name_rectangle_temp_structs.get_mut(parent_name).unwrap();
+
+                let x_parent = &parent_point.1;
+                let y_parent = &parent_point.2;
                 let level_height = y_parent - y;
                 let interation_x_margin = (i + 1) as i32 * scale;
                 let connecting_arrow_points = vec![
                     [0, 0],
                     [0, level_height - height],
                     [-*x + x_parent + width - interation_x_margin * 2, level_height - height],
-                    [-*x + x_parent + width - interation_x_margin * 2, *y_parent - y]                    ];
-                
+                    [-*x + x_parent + width - interation_x_margin * 2, *y_parent - y]
+                ];
+                let connecting_arrow_id = format!("connecting_arrow_{}",generate_random_string_id());
                 let connecting_arrow = Element::simple_arrow(
-                    "555".to_string(),
+                    connecting_arrow_id.clone(),
                     x + interation_x_margin,
                     *y,
                     0,
@@ -287,21 +339,62 @@ fn main() {
                     locked,
                     elements::CONNECTION_STYLE.into(),
                     connecting_arrow_points,
-                    Binding{
-                        element_id: "2".to_string(),
+                    Binding {
+                        element_id: id.to_string(), //"2".to_string(), // child container
                         focus: -0.7142857142857143,
                         gap: 1
                     },
-                    Binding{
-                        element_id: "1".to_string(),
+                    Binding {
+                        element_id: parent_temp_struct.id.clone(), //"1".to_string(),    // parent container
                         focus: 0.7142857142857143,
                         gap: 1
                     },
                 );
+
+                // add child container id to the binding
+                // add parent container id to the binding 
+                // add boundElements for the child container (id of the connecting_arrow)
+                // add boundElements for the parent container (id of the connecting_arrow)                
+                // parent_temp_struct.bound_elements.push(BoundElement{
+                //     id: connecting_arrow_id.to_string(), 
+                //     element_type: "arrow".to_string()
+                // });
+                let connecting_arrow_bound = BoundElement{
+                    id: connecting_arrow_id,
+                    element_type: "arrow".to_string(),
+                };
+                // dbg!(parent_temp_struct);
+                
+                // let mut parent_bounded_elements = &mut parent_temp_struct.bound_elements;
+                // parent_bounded_elements.push(connecting_arrow_bound);
+                // parent_temp_struct.bound_elements = parent_bounded_elements;
+                parent_temp_struct.bound_elements.push(connecting_arrow_bound.clone());
+
+                let mut current_temp_struct = container_name_rectangle_temp_structs.get_mut(name).unwrap();
+                
+                current_temp_struct.bound_elements.push(connecting_arrow_bound);
+                // dbg!(current_temp_struct);
+
+                // container_name_rectangle_temp_structs.insert(cn_name, rectangle_temp_struct); 
+
                 excalidraw_file.elements.push(connecting_arrow);
         }
     }
 
+    container_name_rectangle_temp_structs.values().into_iter().for_each(|rect|{
+        let container_rectangle = Element::simple_rectangle(
+                rect.id.clone(),
+                rect.x,
+                rect.y,
+                rect.width,
+                rect.height,
+                rect.group_ids.clone(),
+                rect.bound_elements.clone(),
+                locked,
+            );
+            excalidraw_file.elements.push(container_rectangle);
+        }
+    );
     let excalidraw_data = serde_json::to_string(&excalidraw_file).unwrap();
     match cli.output_path {
         Some(output_file_path) => {
@@ -342,6 +435,7 @@ fn find_containers_traversal_order(container_name_to_parents: HashMap<&str, Depe
     for name in container_name_to_parents.keys() {
         traverse_in_hierarchy(name, &container_name_to_parents, &mut containers_traversal_order, &mut visited);
     }
+    // Vec::from_iter(visited)
     containers_traversal_order
 }
 
@@ -361,7 +455,7 @@ fn find_additional_width(container_name_len: usize, scale: &i32) -> i32 {
     }
 }
 
-fn parse_docker_compose_yaml(file_path: &str) -> Result<HashMap<String, serde_yaml::Value>, ExcalidockerError> {    
+fn parse_yaml_file(file_path: &str) -> Result<HashMap<String, serde_yaml::Value>, ExcalidockerError> {    
     let contents = match read_file(file_path) {
         Ok(contents) => contents,
         Err(err) => return Err(err),
@@ -400,7 +494,7 @@ fn read_file(file_path: &str) -> Result<String, ExcalidockerError> {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct DockerContainer {
-    id: String,
+    pub id: String,
     image: String,
     command: Option<String>,
     environment: Option<HashMap<String, String>>,
@@ -410,10 +504,10 @@ struct DockerContainer {
     // TODO: add other fields
 }
 
-fn convert_to_container(id: i32, value: &Value) -> Option<DockerContainer> {
+fn convert_to_container(id: String, value: &Value) -> Option<DockerContainer> {
     let mapping = value.as_mapping()?;
     let mut container = DockerContainer {
-        id: id.to_string(),
+        id,
         image: String::new(),
         command: None,
         environment: None,
@@ -471,21 +565,17 @@ fn convert_to_container(id: i32, value: &Value) -> Option<DockerContainer> {
     Some(container)
 }
 
-                
+fn generate_random_string_id() -> String {
+    rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(7)
+        .map(char::from)
+        .collect()
+}
+
 // #[test]
 // fn check_parsing() {
-//     let file_path = "docker-compose.yaml";
-//     // let file_path = "docker-compose-simple.yaml";
-//     let mut file = File::open(file_path).unwrap();
-//     let mut contents = String::new();
-//     file.read_to_string(&mut contents).unwrap();
-
-//     let docker_compose: HashMap<String, serde_yaml::Value> = serde_yaml::from_str(&contents).unwrap();
-//     let value = docker_compose.get("services").unwrap();
-//     for (k, v) in value.as_mapping().unwrap() {
-//         let convert_to_container = convert_to_container(v);
-//         dbg!(convert_to_container);
-//     }
+//
 // }
           
 #[test]

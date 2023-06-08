@@ -18,6 +18,7 @@ serde_json = "^1.0"
 serde_yaml = "0.9.21"
 clap = {version = "4.0.32", features = ["derive"]}
 thiserror = "1.0.40"
+rand = "0.8.5"
 
 [profile.release]
 debug = false

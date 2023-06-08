@@ -1,7 +1,7 @@
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-#[derive(Serialize)]
+#[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BoundElement {
     pub id: String,
@@ -9,7 +9,7 @@ pub struct BoundElement {
     pub element_type: String,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Binding {
     pub element_id: String,
@@ -114,6 +114,7 @@ pub enum Element {
         y: i32,
         width: i32,
         height: i32,
+        group_ids: Vec<String>,
         bound_elements: Vec<BoundElement>,
         angle: i32,
         stroke_color: String,
@@ -128,11 +129,13 @@ pub enum Element {
     },
     #[serde(rename_all = "camelCase")]
     Ellipse {
+        id: String,
         x: i32,
         y: i32,
         width: i32,
         height: i32,
         group_ids: Vec<String>,
+        bound_elements: Vec<BoundElement>,
         angle: i32,
         stroke_color: String,
         background_color: String,
@@ -303,6 +306,7 @@ impl Element {
         y: i32,
         width: i32,
         height: i32,
+        group_ids: Vec<String>,
         bound_elements: Vec<BoundElement>,
         angle: i32,
         stroke_color: String,
@@ -320,6 +324,7 @@ impl Element {
             y,
             width,
             height,
+            group_ids,
             bound_elements,
             angle,
             stroke_color,
@@ -335,11 +340,13 @@ impl Element {
     }
 
     pub fn ellipse(
+        id: String,
         x: i32,
         y: i32,
         width: i32,
         height: i32,
         group_ids: Vec<String>,
+        bound_elements: Vec<BoundElement>,
         angle: i32,
         stroke_color: String,
         background_color: String,
@@ -351,11 +358,13 @@ impl Element {
         locked: bool,
     ) -> Self {
         Self::Ellipse {
+            id,
             x,
             y,
             width,
             height,
             group_ids,
+            bound_elements,
             angle,
             stroke_color,
             background_color,
@@ -369,13 +378,15 @@ impl Element {
         }
     }
     
-    pub fn draw_ellipse(x: i32, y: i32, width: i32, height: i32, group_ids: Vec<String>, locked: bool) -> Self {        
+    pub fn draw_ellipse(id: String, x: i32, y: i32, width: i32, height: i32, group_ids: Vec<String>, bound_elements: Vec<BoundElement>, locked: bool) -> Self {        
         Self::ellipse(
+            id,
             x,
             y,
             width,
             height,
             group_ids,
+            bound_elements,
             elements::ANGLE,
             elements::STROKE_COLOR.into(),
             elements::BACKGROUND_COLOR.into(),
@@ -473,13 +484,14 @@ impl Element {
         )
     }
 
-    pub fn simple_rectangle(id: String, x: i32, y: i32, width: i32, height: i32, bound_elements: Vec<BoundElement>, locked: bool) -> Self {
+    pub fn simple_rectangle(id: String, x: i32, y: i32, width: i32, height: i32, group_ids: Vec<String>, bound_elements: Vec<BoundElement>, locked: bool) -> Self {
         Self::rectangle(
             id,
             x,
             y,
             width,
             height,
+            group_ids,
             bound_elements,
             elements::ANGLE,
             elements::STROKE_COLOR.into(),
