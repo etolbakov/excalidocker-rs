@@ -19,7 +19,7 @@ permissions:
 
 jobs:
 
-   build-macos:
+  build-macos:
      name: Build macOS binary
      strategy:
        matrix:
