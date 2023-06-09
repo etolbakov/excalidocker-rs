@@ -11,7 +11,7 @@ on:
 
 env:
   RUST_TOOLCHAIN: nightly-2023-05-03
-  BUILD_VERSION_PREFIX: v0.1.3
+  BUILD_VERSION_PREFIX: v0.1.4
   CARGO_PROFILE: release
 
 permissions:
@@ -194,6 +194,7 @@ jobs:
         run: |
            tar xvf amd64/excalidocker-linux-amd64.tgz -C amd64/ && rm amd64/excalidocker-linux-amd64.tgz
            cp -r amd64 docker/ci
+           cp excalidocker-config.yaml docker/ci/amd64
 
       - name: Download arm64 binary
         id: download-arm64
@@ -207,6 +208,7 @@ jobs:
         run: |
           tar xvf arm64/excalidocker-linux-arm64.tgz -C arm64/ && rm arm64/excalidocker-linux-arm64.tgz
           cp -r arm64 docker/ci
+          cp excalidocker-config.yaml docker/ci/arm64
 
       - name: Build and push all
         uses: docker/build-push-action@v3

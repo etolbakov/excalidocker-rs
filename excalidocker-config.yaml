@@ -1,0 +1,9 @@
+font:
+  size: 16 # recommended S - 16,M - 20,L - 28, XL - 36
+  family: 1 # 1 - hand-drawn,2 - normal, 3- code
+services:
+  background_color: "#b2f2bb"
+  fill: "hachure" # "hachure","cross-hatch", "solid"
+ports:
+  background_color: "#a5d8ff"
+  fill: "hachure" # "hachure","cross-hatch", "solid"

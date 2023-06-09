@@ -1,5 +1,61 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct ExcalidrawConfig {
+    pub font: Font,
+    pub services: Services,
+    pub ports: Ports,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Font {
+    pub size: i32,
+    pub family: i32,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Services {
+    pub background_color: String,
+    pub fill: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Ports {
+    pub background_color: String,
+    pub fill: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BoundElement {
+    pub id: String,
+    #[serde(rename = "type")]
+    pub element_type: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Binding {
+    pub element_id: String,
+    pub focus: f32,
+    pub gap: u16,
+}
+
+pub fn binding(element_id: String) -> Binding {
+    Binding {
+        element_id,
+        focus: 0.05,
+        gap: 1,
+    }
+}
+
+pub fn arrow_bounded_element(id: String) -> BoundElement{
+    BoundElement{
+        id, 
+        element_type: "arrow".to_string()
+    }
+}
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -34,6 +90,7 @@ pub enum Element {
         y: i32,
         width: i32,
         height: i32,
+        group_ids: Vec<String>,
         angle: i32,
         stroke_color: String,
         background_color: String,
@@ -71,6 +128,7 @@ pub enum Element {
     },
     #[serde(rename_all = "camelCase")]
     Arrow {
+        id: String,
         x: i32,
         y: i32,
         width: i32,
@@ -83,16 +141,21 @@ pub enum Element {
         stroke_style: String,
         roughness: i32,
         opacity: i32,
+        start_binding: Binding,
+        end_binding: Binding,
         stroke_sharpness: String,
         locked: bool,
         points: Vec<[i32; 2]>,
     },
     #[serde(rename_all = "camelCase")]
     Rectangle {
+        id: String,
         x: i32,
         y: i32,
         width: i32,
         height: i32,
+        group_ids: Vec<String>,
+        bound_elements: Vec<BoundElement>,
         angle: i32,
         stroke_color: String,
         background_color: String,
@@ -106,10 +169,13 @@ pub enum Element {
     },
     #[serde(rename_all = "camelCase")]
     Ellipse {
+        id: String,
         x: i32,
         y: i32,
         width: i32,
         height: i32,
+        group_ids: Vec<String>,
+        bound_elements: Vec<BoundElement>,
         angle: i32,
         stroke_color: String,
         background_color: String,
@@ -135,7 +201,7 @@ pub mod elements {
     pub const OPACITY: i32 = 100;
     pub const STROKE_SHARPNESS: &str = "sharp";
     pub const LOCKED: bool = false;
-    pub const FONT_SIZE_SMALL: i32 = 12;
+    pub const FONT_SIZE_SMALL: i32 = 16;
     pub const FONT_SIZE_MEDIUM: i32 = 20;
     pub const FONT_SIZE_LARGE: i32 = 28;
     pub const FONT_SIZE_EXTRA_LARGE: i32 = 36;
@@ -157,6 +223,7 @@ impl Element {
         y: i32,
         width: i32,
         height: i32,
+        group_ids: Vec<String>,
         angle: i32,
         stroke_color: String,
         background_color: String,
@@ -177,6 +244,7 @@ impl Element {
             y,
             width,
             height,
+            group_ids,
             angle,
             stroke_color,
             background_color,
@@ -232,10 +300,13 @@ impl Element {
     }
 
     pub fn arrow(
+        id: String,
         x: i32,
         y: i32,
         width: i32,
         height: i32,
+        start_binding: Binding,
+        end_binding: Binding,
         angle: i32,
         stroke_color: String,
         background_color: String,
@@ -248,10 +319,13 @@ impl Element {
         points: Vec<[i32; 2]>,
     ) -> Self {
         Self::Arrow {
+            id,
             x,
             y,
             width,
             height,
+            start_binding,
+            end_binding,
             angle,
             stroke_color,
             background_color,
@@ -267,10 +341,13 @@ impl Element {
     }
 
     pub fn rectangle(
+        id: String,
         x: i32,
         y: i32,
         width: i32,
         height: i32,
+        group_ids: Vec<String>,
+        bound_elements: Vec<BoundElement>,
         angle: i32,
         stroke_color: String,
         background_color: String,
@@ -282,10 +359,13 @@ impl Element {
         locked: bool,
     ) -> Self {
         Self::Rectangle {
+            id,
             x,
             y,
             width,
             height,
+            group_ids,
+            bound_elements,
             angle,
             stroke_color,
             background_color,
@@ -300,10 +380,13 @@ impl Element {
     }
 
     pub fn ellipse(
+        id: String,
         x: i32,
         y: i32,
         width: i32,
         height: i32,
+        group_ids: Vec<String>,
+        bound_elements: Vec<BoundElement>,
         angle: i32,
         stroke_color: String,
         background_color: String,
@@ -315,10 +398,13 @@ impl Element {
         locked: bool,
     ) -> Self {
         Self::Ellipse {
+            id,
             x,
             y,
             width,
             height,
+            group_ids,
+            bound_elements,
             angle,
             stroke_color,
             background_color,
@@ -332,16 +418,29 @@ impl Element {
         }
     }
     
-    pub fn draw_ellipse(x: i32, y: i32, width: i32, height: i32, locked: bool) -> Self {        
+    pub fn draw_ellipse(
+        id: String, 
+        x: i32, 
+        y: i32, 
+        width: i32, 
+        height: i32, 
+        group_ids: Vec<String>, 
+        bound_elements: Vec<BoundElement>,
+        background_color: String,
+        fill_style: String, 
+        locked: bool) -> Self {        
         Self::ellipse(
+            id,
             x,
             y,
             width,
             height,
+            group_ids,
+            bound_elements,
             elements::ANGLE,
             elements::STROKE_COLOR.into(),
-            elements::BACKGROUND_COLOR.into(),
-            elements::FILL_STYLE.into(),
+            background_color, //elements::BACKGROUND_COLOR.into(),
+            fill_style, //elements::FILL_STYLE.into(),
             elements::STROKE_WIDTH,
             elements::STROKE_STYLE.into(),
             elements::OPACITY,
@@ -350,12 +449,21 @@ impl Element {
         )
     }
 
-    pub fn draw_small_monospaced_text(x: i32, y: i32, locked: bool, text: String) -> Self {
+    pub fn draw_small_monospaced_text(
+        text: String,
+        x: i32, 
+        y: i32, 
+        group_ids: Vec<String>, 
+        font_size: i32,
+        font_family: i32, 
+        locked: bool
+    ) -> Self {
         Self::text(
             x,
             y,
-            (4 + text.chars().count() * 9) as i32,
+            (4 + text.chars().count() * 18) as i32,
             (text.lines().count() * 19) as i32,
+            group_ids,
             0,
             elements::STROKE_COLOR.into(),
             elements::BACKGROUND_COLOR.into(),
@@ -366,8 +474,8 @@ impl Element {
             elements::STROKE_SHARPNESS.into(),
             locked,
             text,
-            elements::FONT_SIZE_SMALL,
-            elements::FONT_FAMILY_MONOSPACE,
+            font_size, //elements::FONT_SIZE_SMALL,
+            font_family, //elements::FONT_FAMILY_MONOSPACE,
             elements::TEXT_ALIGN_LEFT.into(),
             elements::VERTICAL_ALIGN_TOP.into(),
         )
@@ -410,12 +518,17 @@ impl Element {
         )
     }
 
-    pub fn simple_arrow(x: i32, y: i32,  width: i32, height: i32, locked: bool, stroke_style: String, points: Vec<[i32; 2]>) -> Self {
+    pub fn simple_arrow(id: String, x: i32, y: i32,  width: i32, height: i32, locked: bool, stroke_style: String, points: Vec<[i32; 2]>,
+        start_binding: Binding,
+        end_binding: Binding) -> Self {
         Self::arrow(
+            id,
             x,
             y,
             width, // TODO 
             height,
+            start_binding,
+            end_binding,
             elements::ANGLE,
             elements::STROKE_COLOR.into(),
             elements::BACKGROUND_COLOR.into(),
@@ -429,16 +542,29 @@ impl Element {
         )
     }
 
-    pub fn simple_rectangle(x: i32, y: i32, width: i32, height: i32, locked: bool) -> Self {
+    pub fn simple_rectangle(
+        id: String, 
+        x: i32, 
+        y: i32, 
+        width: i32, 
+        height: i32, 
+        group_ids: Vec<String>, 
+        bound_elements: Vec<BoundElement>,
+        background_color: String,
+        fill_style: String, 
+        locked: bool) -> Self {
         Self::rectangle(
+            id,
             x,
             y,
             width,
             height,
+            group_ids,
+            bound_elements,
             elements::ANGLE,
             elements::STROKE_COLOR.into(),
-            elements::BACKGROUND_COLOR.into(),
-            elements::FILL_STYLE.into(),
+            background_color, //elements::BACKGROUND_COLOR.into(),
+            fill_style, //elements::FILL_STYLE.into(),
             elements::STROKE_WIDTH,
             elements::STROKE_STYLE.into(),
             elements::OPACITY,

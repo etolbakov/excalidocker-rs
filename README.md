@@ -1,23 +1,31 @@
 # excalidocker-rs
-Rust-based utility to convert docker-compose.yaml files into [excalidraw](https://excalidraw.com/) files.
-![excalidocker](./data/img/excalidocker.png)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/etolbakov/excalidocker-rs)
 
-# Table of Contents
-1. [Motivation](#motivation)
-2. [Usage](#usage)
-3. [Installation](#installation)
-4. [Contributing](#contributing)
-5. [Roadmap](#roadmap)
+Rust-based utility to convert docker-compose.yaml files into [excalidraw](https://excalidraw.com/) files.
+![excalidocker](./data/img/excalidocker-colour.png)
+
+Table of contents
+=================
+<!--ts-->
+   * [Motivation](#motivation)
+   * [Usage](#usage)
+      * [Docker image](#docker-image)
+      * [Artefact](#artefact)
+      * [Config file](#config-file)
+   * [Installation](#installation)
+   * [Contributing](#contributing)
+   * [Roadmap](#roadmap)
+<!--te-->
 
 ## Motivation
 An idea of writing this utility originates from Robin Moffatt's [tweet](https://twitter.com/rmoff/status/1659214185220423685).
 ![motivation](./data/img/motivation.png)
 
 ## Usage
-### 🐳 Docker image
-`excalidocker` is available as a [docker image](https://hub.docker.com/r/etolbakov/excalidocker/tags).
-Convert docker-compose files without installing/building. Use it in Github actions for auto documentation. 
-The sky is the limit.Get the latest image from [docker hub](https://hub.docker.com/r/etolbakov/excalidocker): 
+### Docker image
+🐳 `excalidocker` is available as a [docker image](https://hub.docker.com/r/etolbakov/excalidocker/tags).
+Convert docker-compose files without hassle. Use it in Github actions for documentation, presentations, ADRs what have you 
+The sky is the limit. Get the latest image from [docker hub](https://hub.docker.com/r/etolbakov/excalidocker): 
 ```sh
 docker pull etolbakov/excalidocker
 ```
@@ -25,11 +33,11 @@ Usage example:
  ```sh
 docker run --rm -v "$(pwd)/data/compose/:/tmp/" -e INPUT_PATH=/tmp/docker-compose.yaml etolbakov/excalidocker:latest > produced-by-image.excalidraw
 ```
-The `produced-by-image.excalidraw` file could be opened in [excalidraw](https://excalidraw.com/) and.... hopefully it won't be too scary 👻 😅.
+The `produced-by-image.excalidraw` file could be opened in [excalidraw](https://excalidraw.com/) and .... hopefully it won't be too scary 👻 😅.
 More command examples are in the [Makefile](/Makefile).
 
-### 📚Artifact
-Download the latest artifact from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it.
+### Artefact
+📚 Download the latest artifact from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it.
 
 To get the `help` menu use:
 ```sh
@@ -45,6 +53,7 @@ Options:
   -i, --input-path <INPUT_PATH>    file path to the docker-compose.yaml
   -s, --skip-dependencies          display connecting lines between services; if `true` then only service without the lines are rendered
   -o, --output-path <OUTPUT_PATH>  file path for the output excalidraw file. By default the file content is sent to console output
+  -c, --config-path <CONFIG_PATH>  config file path for the excalidraw. [default: excalidocker-config.yaml]
   -h, --help                       Print help
   -V, --version                    Print version
 ```
@@ -62,6 +71,9 @@ Usage example:
 > and you can open it in the future by double-clicking it just as you can any registered app.
 >
 > ![mac-warning](./data/img/mac-warning.png)
+### Config file
+`excalidocker` supports basic customization provided via file, for example [excalidocker-config.yaml](./excalidocker-config.yaml).
+At the moment it's possible to customize font, fill type ("hachure","cross-hatch", "solid") and backgroud colours for services and ports.
 
 ## Installation
 To build `excalidocker` locally, please follow these steps:
@@ -80,8 +92,6 @@ There is the `make r` command available in the [Makefile](/Makefile) along with 
 ## Roadmap
 These are the features that I would like to add at some point:
 - 📊 visualize more data from a docker-compose file - volumes, network, etc
-- 📜 [config file support](https://github.com/etolbakov/excalidocker-rs/issues/7)
-- ↔️ [use arrows to connect boxes](https://github.com/etolbakov/excalidocker-rs/issues/6)
 - 🦀 various code improvements/enhancements. Feel free to review/suggest if anything could be done better!
 - 👨‍💻 etc
 
