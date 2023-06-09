@@ -9,4 +9,4 @@ COPY $TARGETARCH/excalidocker-config.yaml $TARGETARCH/excalidocker /excalidocker
 
 ENV PATH /excalidocker/bin/:$PATH
 
-CMD ["sh", "-c", "excalidocker --input-path ${INPUT_PATH} ${SKIP_DEPS:+ --skip-dependencies}"]
+# CMD ["sh", "-c", "excalidocker --input-path ${INPUT_PATH} ${SKIP_DEPS:+ --skip-dependencies}"]
