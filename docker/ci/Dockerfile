@@ -5,7 +5,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
 
 ARG TARGETARCH
 
-ADD $TARGETARCH/excalidocker /excalidocker/bin/
+COPY $TARGETARCH/excalidocker-config.yaml $TARGETARCH/excalidocker /excalidocker/bin/
 
 ENV PATH /excalidocker/bin/:$PATH
 

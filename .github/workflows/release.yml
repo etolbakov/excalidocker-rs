@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - feat/connected-by-arrows
     paths:
       - src/**
       - Cargo.toml
@@ -192,8 +193,10 @@ jobs:
 
       - name: Unzip the amd64 artifacts
         run: |
+          ls -la
           tar xvf amd64/excalidocker-linux-amd64.tgz -C amd64/ && rm amd64/excalidocker-linux-amd64.tgz
           cp -r amd64 docker/ci
+          cp excalidocker-config.yaml docker/ci/amd64
 
       - name: Download arm64 binary
         id: download-arm64
@@ -205,8 +208,10 @@ jobs:
       - name: Unzip the arm64 artifacts
         id: unzip-arm64
         run: |
+          ls -lah
           tar xvf arm64/excalidocker-linux-arm64.tgz -C arm64/ && rm arm64/excalidocker-linux-arm64.tgz
-          cp -r arm64 docker/ci
+          cp -r arm64 docker/ci          
+          cp excalidocker-config.yaml docker/ci/arm64
 
       - name: Build and push all
         uses: docker/build-push-action@v3
@@ -219,29 +224,29 @@ jobs:
             etolbakov/excalidocker:latest
             etolbakov/excalidocker:${{ env.IMAGE_TAG }}            
 
-  release:
-    name: Release artifacts
-    needs: [build-macos, build-linux, docker]
-    #    needs: [build-linux, docker]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-
-      - name: Get the version
-        id: get_version
-        run: echo ::set-output name=VERSION::$(grep "^version" Cargo.toml | awk '{print $3}' | tr -d '"')
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-
-      - name: Publish release
-        uses: ncipollo/release-action@v1
-        with:
-          name: "${{ steps.get_version.outputs.VERSION }}"
-          prerelease: false
-          makeLatest: true
-          tag: ${{ steps.get_version.outputs.VERSION }}
-          generateReleaseNotes: true
-          artifacts: |
-            **/excalidocker-*
+#  release:
+#    name: Release artifacts
+#    needs: [build-macos, build-linux, docker]
+#    #    needs: [build-linux, docker]
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout sources
+#        uses: actions/checkout@v3
+#
+#      - name: Get the version
+#        id: get_version
+#        run: echo ::set-output name=VERSION::$(grep "^version" Cargo.toml | awk '{print $3}' | tr -d '"')
+#
+#      - name: Download artifacts
+#        uses: actions/download-artifact@v3
+#
+#      - name: Publish release
+#        uses: ncipollo/release-action@v1
+#        with:
+#          name: "${{ steps.get_version.outputs.VERSION }}"
+#          prerelease: false
+#          makeLatest: true
+#          tag: ${{ steps.get_version.outputs.VERSION }}
+#          generateReleaseNotes: true
+#          artifacts: |
+#            **/excalidocker-*
