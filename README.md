@@ -17,7 +17,7 @@ An idea of writing this utility originates from Robin Moffatt's [tweet](https://
 ### 🐳 Docker image
 `excalidocker` is available as a [docker image](https://hub.docker.com/r/etolbakov/excalidocker/tags).
 Convert docker-compose files without installing/building. Use it in Github actions for auto documentation. 
-The sky is the limit.Get the latest image from [docker hub](https://hub.docker.com/r/etolbakov/excalidocker): 
+The sky is the limit. Get the latest image from [docker hub](https://hub.docker.com/r/etolbakov/excalidocker): 
 ```sh
 docker pull etolbakov/excalidocker
 ```
@@ -81,7 +81,6 @@ There is the `make r` command available in the [Makefile](/Makefile) along with 
 These are the features that I would like to add at some point:
 - 📊 visualize more data from a docker-compose file - volumes, network, etc
 - 📜 [config file support](https://github.com/etolbakov/excalidocker-rs/issues/7)
-- ↔️ [use arrows to connect boxes](https://github.com/etolbakov/excalidocker-rs/issues/6)
 - 🦀 various code improvements/enhancements. Feel free to review/suggest if anything could be done better!
 - 👨‍💻 etc
 
