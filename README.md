@@ -1,6 +1,6 @@
 # excalidocker-rs
 Rust-based utility to convert docker-compose.yaml files into [excalidraw](https://excalidraw.com/) files.
-![excalidocker](./data/img/excalidocker-color.png)
+![excalidocker](./data/img/excalidocker-colour.png)
 
 # Table of Contents
 1. [Motivation](#motivation)
@@ -27,7 +27,7 @@ docker run --rm -v "$(pwd)/data/compose/:/tmp/" -e INPUT_PATH=/tmp/docker-compos
 ```
 ❌❌❌❌ TODO: There is a basic config support
 
-The `produced-by-image.excalidraw` file could be opened in [excalidraw](https://excalidraw.com/) and.... hopefully it won't be too scary 👻 😅.
+The `produced-by-image.excalidraw` file could be opened in [excalidraw](https://excalidraw.com/) and .... hopefully it won't be too scary 👻 😅.
 More command examples are in the [Makefile](/Makefile).
 
 ### 📚Artifact
@@ -47,6 +47,7 @@ Options:
   -i, --input-path <INPUT_PATH>    file path to the docker-compose.yaml
   -s, --skip-dependencies          display connecting lines between services; if `true` then only service without the lines are rendered
   -o, --output-path <OUTPUT_PATH>  file path for the output excalidraw file. By default the file content is sent to console output
+  -c, --config-path <CONFIG_PATH>  config file path for the excalidraw. [default: excalidocker-config.yaml]
   -h, --help                       Print help
   -V, --version                    Print version
 ```

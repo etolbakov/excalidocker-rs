@@ -3,6 +3,7 @@ mod error;
 
 use clap::{Parser, arg, command};
 use exporters::excalidraw::ExcalidrawConfig;
+use exporters::excalidraw::elements::{FONT_SIZE_SMALL, FONT_SIZE_MEDIUM, FONT_SIZE_LARGE, FONT_SIZE_EXTRA_LARGE};
 use exporters::excalidraw::{BoundElement, arrow_bounded_element, binding};
 use rand::{distributions::Alphanumeric, Rng};
 use std::collections::HashSet;
@@ -39,7 +40,6 @@ struct Cli {
     #[arg(short, long)]
     output_path: Option<String>,
     /// config file path for the excalidraw.
-    /// By default the config is take from the root of the project
     #[arg(short, long, default_value_t = CONFIG_DEFAULT_PATH.to_string())]
     config_path: String,
 }
@@ -203,8 +203,7 @@ fn main() {
     let containers_traversal_order = find_containers_traversal_order(container_name_to_parents);
 
     for cn_name in containers_traversal_order { 
-        let container_width = width + find_additional_width(cn_name.as_str().len(), &scale);
-        
+        let container_width = width + find_additional_width(cn_name.as_str().len(), &scale, &excalidraw_config.font.size);
         let container_struct = container_name_to_container_struct.get(cn_name.as_str()).unwrap();
         container_name_to_point.insert(cn_name.clone(), ContainerPoint::new(cn_name.clone(), x, y));
         
@@ -216,7 +215,7 @@ fn main() {
             container_name: cn_name.clone(),
             x,
             y,
-            width,
+            width: container_width,
             height,
             group_ids: container_group.clone(),
             text_group_ids: container_group.clone(),
@@ -388,8 +387,9 @@ fn main() {
     match cli.output_path {
         Some(output_file_path) => {
             fs::write(output_file_path.clone(), excalidraw_data).expect("Unable to write file");
-            println!("\nThe input file is '{}'", input_filepath);
-            println!("The excalidraw file is successfully generated and put at '{}'\n", output_file_path);
+            println!("\nConfiguration file : '{}'", cli.config_path.as_str());
+            println!("\nInput file : '{}'", input_filepath);
+            println!("\nExcalidraw file is successfully generated and can be found at '{}'\n", output_file_path);
         }
         None => println!("{}", excalidraw_data),
     }
@@ -432,12 +432,26 @@ fn find_containers_traversal_order(container_name_to_parents: HashMap<&str, Depe
 /// it's possible to accommodate approximately 3 letters in one grid item.
 /// The container width is 7 grid items(140) in total and uses only 5 grid items
 /// to accommodate the text up to 14 characters(`max_container_name_len`)
-fn find_additional_width(container_name_len: usize, scale: &i32) -> i32 {
-    let container_name_len_max = 14;
+/// Empirically found that for 
+///  20 | 1.5 letters in grid
+///  28 | 1   letter in grid
+///  36 | 1   letter in grid
+fn find_additional_width(
+    container_name_len: usize, 
+    scale: &i32,
+    font_size: &i32,
+) -> i32 {
+    let (container_name_len_max, elements_per_item_grid) = match font_size {
+        &FONT_SIZE_SMALL => (14, 3),
+        &FONT_SIZE_MEDIUM => (9, 2),
+        &FONT_SIZE_LARGE => (5, 1),
+        &FONT_SIZE_EXTRA_LARGE => (2, 1),
+        _ => (1, 1),        
+    };
     let text_accommodation_len_default = 5; 
     let text_accommodation_margin = 1; 
     if container_name_len > container_name_len_max {
-        let required_space_for_text = ((container_name_len / 3) - text_accommodation_len_default + text_accommodation_margin) as i32;
+        let required_space_for_text = ((container_name_len / elements_per_item_grid) - text_accommodation_len_default + text_accommodation_margin) as i32;
         scale * required_space_for_text
     } else {
         0

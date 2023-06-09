@@ -461,7 +461,7 @@ impl Element {
         Self::text(
             x,
             y,
-            (4 + text.chars().count() * 9) as i32,
+            (4 + text.chars().count() * 18) as i32,
             (text.lines().count() * 19) as i32,
             group_ids,
             0,
