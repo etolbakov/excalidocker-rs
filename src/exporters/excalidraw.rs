@@ -201,7 +201,7 @@ pub mod elements {
     pub const OPACITY: i32 = 100;
     pub const STROKE_SHARPNESS: &str = "sharp";
     pub const LOCKED: bool = false;
-    pub const FONT_SIZE_SMALL: i32 = 12;
+    pub const FONT_SIZE_SMALL: i32 = 16;
     pub const FONT_SIZE_MEDIUM: i32 = 20;
     pub const FONT_SIZE_LARGE: i32 = 28;
     pub const FONT_SIZE_EXTRA_LARGE: i32 = 36;
