@@ -2,7 +2,7 @@ mod exporters;
 mod error;
 
 use clap::{Parser, arg, command};
-use exporters::excalidraw::BoundElement;
+use exporters::excalidraw::{BoundElement, arrow_bounded_element, binding};
 use rand::{distributions::Alphanumeric, Rng};
 use std::collections::HashSet;
 use std::collections::HashMap;
@@ -19,7 +19,6 @@ use crate::error::ExcalidockerError::{self,
     InvalidDockerCompose, FileIncorrectExtension, 
     FileNotFound, FileFailedRead, FileFailedParsing
 };
-use crate::exporters::excalidraw::Binding;
 use crate::exporters::excalidraw::elements;
 
 #[derive(Parser)]
@@ -40,13 +39,17 @@ struct Cli {
     output_path: Option<String>,
 }
 
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 struct ContainerPoint(String, i32, i32);
 
 impl ContainerPoint {
     fn new(name: String, x: i32, y: i32) -> Self {
         Self(name, x, y)
-    } 
+    }
+    // fn set_name(mut self, name: String) -> Self {
+    //     self.0 = name;
+    //     self
+    // } 
 }
 
 #[derive(Debug, Clone)]
@@ -98,8 +101,12 @@ fn traverse_in_hierarchy(
 //         }
 //     }
 
+/// This struct is introduced to hold intermediate state of the rectange
+/// Due to the implementation logic the rectangle initialization (`x`, `y`, `width`, `height`) 
+/// is happening in the beginning of the program while `group_ids` and `bound_elements` 
+/// could be added/updated later.
 #[derive(Debug, Clone)]
-struct RectangleTempStruct {
+struct RectangleStruct {
     pub id: String, 
     pub x: i32, 
     pub y: i32, 
@@ -125,11 +132,10 @@ fn main() {
     let y_margin = 60;
 
     let mut components = Vec::new();
-    let mut container_name_rectangle_temp_structs = HashMap::new();
+    let mut container_name_rectangle_structs = HashMap::new();
     let mut container_name_to_point = HashMap::new();
     let mut container_name_to_parents: HashMap<&str, DependencyComponent> = HashMap::new();
     let mut container_name_to_container_struct = HashMap::new();
-    // let mut container_name_to_excalidraw_element = HashMap::new();
 
     let input_filepath = cli.input_path.as_str();
     let docker_compose_yaml = match parse_yaml_file(input_filepath) {
@@ -177,25 +183,10 @@ fn main() {
         let container_struct = container_name_to_container_struct.get(cn_name.as_str()).unwrap();
         container_name_to_point.insert(cn_name.clone(), ContainerPoint::new(cn_name.clone(), x, y));
         
-        // let bound_elements = vec![BoundElement{
-        //     id: "555".to_string(), 
-        //     element_type: "arrow".to_string()
-        // }];
-        
-        // ------------ Draw container ------------
-        let container_group = vec![format!("group_{}_container_{}_id",cn_name, container_struct.id)];
+        // ------------ Define container ------------
+        let container_group = vec![format!("container_group_{}", generate_id())];
        
-        // let container_rectangle = Element::simple_rectangle(
-        //     container_struct.id.clone(),
-        //     x,
-        //     y,
-        //     container_width,
-        //     height,
-        //     container_group.clone(),
-        //     vec![], // bound_elements,
-        //     locked,
-        // );
-        let mut rectangle_temp_struct = RectangleTempStruct {
+        let mut rectangle_struct = RectangleStruct {
             id: container_struct.id.clone(),
             x,
             y,
@@ -212,9 +203,8 @@ fn main() {
             locked,
             cn_name.clone(),
         );
-        // container_name_to_excalidraw_element.insert(cn_name.clone(), container_rectangle.clone());
 
-        // ------------ Draw ports ------------
+        // ------------ Define ports ------------
         let ports = container_struct.clone().ports.unwrap_or(Vec::new()); 
         for (i, port) in ports.iter().enumerate() {
             let container_x = x + (i as i32 * 80);
@@ -222,8 +212,8 @@ fn main() {
             let (host_port_str, container_port_str) = extract_host_container_ports(port);
             let ellipse_port_group = vec![format!("group_{}_hostport_{}_text",cn_name, i)];
 
-            let ellipse_host_port_id = format!("ellipse_{}", generate_random_string_id());
-            let host_port_arrow_id = format!("port_arrow_{}",generate_random_string_id());
+            let ellipse_host_port_id = format!("ellipse_{}", generate_id());
+            let host_port_arrow_id = format!("port_arrow_{}",generate_id());
 
             let host_port = Element::draw_ellipse (
                 ellipse_host_port_id.clone(), 
@@ -232,10 +222,7 @@ fn main() {
                 port_diameter, 
                 port_diameter, 
                 ellipse_port_group.clone(),
-                vec![BoundElement{
-                    id: host_port_arrow_id.clone(), 
-                    element_type: "arrow".to_string()
-                }],
+                vec![arrow_bounded_element(host_port_arrow_id.clone())],
                 locked,
             ); 
             let host_port_text = Element::draw_small_monospaced_text(
@@ -258,23 +245,14 @@ fn main() {
                     [0, 0],
                     [(i as i32 * 80) - 35, (i as i32 + 100)]
                 ],
-                Binding {
-                    element_id: container_struct.id.clone(),
-                    focus: 0.05,
-                    gap: 1,
-                },
-                Binding {
-                    element_id: ellipse_host_port_id,
-                    focus: 0.05,
-                    gap: 1,
-                },
+                binding(container_struct.id.clone()),
+                binding(ellipse_host_port_id),
             );
 
             // bind the port arrow to the container
-            rectangle_temp_struct.bound_elements.push(BoundElement{
-                id: host_port_arrow_id.to_string(), 
-                element_type: "arrow".to_string()
-            });
+            rectangle_struct.bound_elements.push(
+                arrow_bounded_element(host_port_arrow_id.to_string())
+            );
 
             if host_port_str != container_port_str {
                 let container_port_text = Element::draw_small_monospaced_text(
@@ -291,13 +269,12 @@ fn main() {
             excalidraw_file.elements.push(host_port_arrow);
         }
 
-        // ------------ Draw 'depends_on' relationship ------------
-        // excalidraw_file.elements.push(container_rectangle); // TODO postponing
+        // ------------ Define 'depends_on' relationship ------------
         excalidraw_file.elements.push(container_text);
         
         x += container_width + x_margin;
         y += y_margin;
-        container_name_rectangle_temp_structs.insert(cn_name, rectangle_temp_struct);     
+        container_name_rectangle_structs.insert(cn_name, rectangle_struct);     
     }
 
     for DependencyComponent {id, name, parent} in &components {
@@ -308,8 +285,8 @@ fn main() {
             parent
                 .iter()
                 .map(|dc| {
-                    let x1 = container_name_to_point.get(&dc.name).unwrap();
-                    ContainerPoint::new(dc.name.clone(), x1.1, x1.2)
+                    let cp = container_name_to_point.get(&dc.name).unwrap();
+                    ContainerPoint::new(dc.name.clone(), cp.1, cp.2)
                 })
                 .collect::<Vec<ContainerPoint>>()
         };
@@ -317,7 +294,7 @@ fn main() {
         
         for (i, parent_point) in sorted_container_points.iter().enumerate() {
                 let parent_name = &parent_point.0;
-                let mut parent_temp_struct = container_name_rectangle_temp_structs.get_mut(parent_name).unwrap();
+                let parent_temp_struct = container_name_rectangle_structs.get_mut(parent_name).unwrap();
 
                 let x_parent = &parent_point.1;
                 let y_parent = &parent_point.2;
@@ -329,7 +306,7 @@ fn main() {
                     [-*x + x_parent + width - interation_x_margin * 2, level_height - height],
                     [-*x + x_parent + width - interation_x_margin * 2, *y_parent - y]
                 ];
-                let connecting_arrow_id = format!("connecting_arrow_{}",generate_random_string_id());
+                let connecting_arrow_id = format!("connecting_arrow_{}",generate_id());
                 let connecting_arrow = Element::simple_arrow(
                     connecting_arrow_id.clone(),
                     x + interation_x_margin,
@@ -339,49 +316,25 @@ fn main() {
                     locked,
                     elements::CONNECTION_STYLE.into(),
                     connecting_arrow_points,
-                    Binding {
-                        element_id: id.to_string(), //"2".to_string(), // child container
-                        focus: -0.7142857142857143,
-                        gap: 1
-                    },
-                    Binding {
-                        element_id: parent_temp_struct.id.clone(), //"1".to_string(),    // parent container
-                        focus: 0.7142857142857143,
-                        gap: 1
-                    },
+                    binding(id.to_string()),  // child container
+                    binding(parent_temp_struct.id.clone()),  // parent container
                 );
-
-                // add child container id to the binding
-                // add parent container id to the binding 
-                // add boundElements for the child container (id of the connecting_arrow)
-                // add boundElements for the parent container (id of the connecting_arrow)                
-                // parent_temp_struct.bound_elements.push(BoundElement{
-                //     id: connecting_arrow_id.to_string(), 
-                //     element_type: "arrow".to_string()
-                // });
-                let connecting_arrow_bound = BoundElement{
-                    id: connecting_arrow_id,
-                    element_type: "arrow".to_string(),
-                };
-                // dbg!(parent_temp_struct);
                 
-                // let mut parent_bounded_elements = &mut parent_temp_struct.bound_elements;
-                // parent_bounded_elements.push(connecting_arrow_bound);
-                // parent_temp_struct.bound_elements = parent_bounded_elements;
+                // for dependency connection we need to add:
+                // - child container id to the binding
+                // - parent container id to the binding 
+                // - boundElements for the child container (id of the connecting_arrow)
+                // - boundElements for the parent container (id of the connecting_arrow)                
+
+                let connecting_arrow_bound = arrow_bounded_element(connecting_arrow_id);                
                 parent_temp_struct.bound_elements.push(connecting_arrow_bound.clone());
-
-                let mut current_temp_struct = container_name_rectangle_temp_structs.get_mut(name).unwrap();
-                
-                current_temp_struct.bound_elements.push(connecting_arrow_bound);
-                // dbg!(current_temp_struct);
-
-                // container_name_rectangle_temp_structs.insert(cn_name, rectangle_temp_struct); 
-
+                let current_temp_struct = container_name_rectangle_structs.get_mut(name).unwrap();                
+                current_temp_struct.bound_elements.push(connecting_arrow_bound);             
                 excalidraw_file.elements.push(connecting_arrow);
         }
     }
 
-    container_name_rectangle_temp_structs.values().into_iter().for_each(|rect|{
+    container_name_rectangle_structs.values().into_iter().for_each(|rect|{
         let container_rectangle = Element::simple_rectangle(
                 rect.id.clone(),
                 rect.x,
@@ -565,7 +518,7 @@ fn convert_to_container(id: String, value: &Value) -> Option<DockerContainer> {
     Some(container)
 }
 
-fn generate_random_string_id() -> String {
+fn generate_id() -> String {
     rand::thread_rng()
         .sample_iter(&Alphanumeric)
         .take(7)

@@ -17,6 +17,21 @@ pub struct Binding {
     pub gap: u16,
 }
 
+pub fn binding(element_id: String) -> Binding {
+    Binding {
+        element_id,
+        focus: 0.05,
+        gap: 1,
+    }
+}
+
+pub fn arrow_bounded_element(id: String) -> BoundElement{
+    BoundElement{
+        id, 
+        element_type: "arrow".to_string()
+    }
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ExcalidrawFile {
