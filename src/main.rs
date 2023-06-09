@@ -2,6 +2,7 @@ mod exporters;
 mod error;
 
 use clap::{Parser, arg, command};
+use exporters::excalidraw::ExcalidrawConfig;
 use exporters::excalidraw::{BoundElement, arrow_bounded_element, binding};
 use rand::{distributions::Alphanumeric, Rng};
 use std::collections::HashSet;
@@ -37,7 +38,13 @@ struct Cli {
     /// By default the file content is sent to console output
     #[arg(short, long)]
     output_path: Option<String>,
+    /// config file path for the excalidraw.
+    /// By default the config is take from the root of the project
+    #[arg(short, long, default_value_t = CONFIG_DEFAULT_PATH.to_string())]
+    config_path: String,
 }
+
+pub const CONFIG_DEFAULT_PATH: &str = "excalidocker-config.yaml";
 
 #[derive(Debug, Clone)]
 struct ContainerPoint(String, i32, i32);
@@ -108,11 +115,13 @@ fn traverse_in_hierarchy(
 #[derive(Debug, Clone)]
 struct RectangleStruct {
     pub id: String, 
+    pub container_name: String,
     pub x: i32, 
     pub y: i32, 
     pub width: i32, 
     pub height: i32, 
     pub group_ids: Vec<String>, 
+    pub text_group_ids: Vec<String>, 
     pub bound_elements: Vec<BoundElement>,
 }
    
@@ -136,6 +145,22 @@ fn main() {
     let mut container_name_to_point = HashMap::new();
     let mut container_name_to_parents: HashMap<&str, DependencyComponent> = HashMap::new();
     let mut container_name_to_container_struct = HashMap::new();
+    
+    let excalidocker_config_contents = match read_file(cli.config_path.as_str()) {
+        Ok(contents) => contents,
+        Err(err) => {
+            println!("Configuration file issue: {}", err);
+            return;
+        }
+    };
+
+    let excalidraw_config: ExcalidrawConfig = match serde_yaml::from_str(&excalidocker_config_contents) {
+        Ok(cfg) => cfg,
+        Err(err) => {
+            println!("Configuration parsing issue: {}", err);
+            return;
+        }
+    };
 
     let input_filepath = cli.input_path.as_str();
     let docker_compose_yaml = match parse_yaml_file(input_filepath) {
@@ -188,21 +213,15 @@ fn main() {
        
         let mut rectangle_struct = RectangleStruct {
             id: container_struct.id.clone(),
+            container_name: cn_name.clone(),
             x,
             y,
             width,
             height,
             group_ids: container_group.clone(),
+            text_group_ids: container_group.clone(),
             bound_elements: vec![],
         };
-
-        let container_text = Element::draw_small_monospaced_text(
-            x + scale,
-            y + scale,
-            container_group.clone(),
-            locked,
-            cn_name.clone(),
-        );
 
         // ------------ Define ports ------------
         let ports = container_struct.clone().ports.unwrap_or(Vec::new()); 
@@ -223,14 +242,18 @@ fn main() {
                 port_diameter, 
                 ellipse_port_group.clone(),
                 vec![arrow_bounded_element(host_port_arrow_id.clone())],
+                excalidraw_config.ports.background_color.clone(),
+                excalidraw_config.ports.fill.clone(),
                 locked,
             ); 
             let host_port_text = Element::draw_small_monospaced_text(
+                host_port_str.clone(),
                 container_x + 15,
                 container_y + 20,
                 ellipse_port_group.clone(),
+                excalidraw_config.font.size,
+                excalidraw_config.font.family,
                 locked,
-                host_port_str.clone(),
             );
 
             let host_port_arrow = Element::simple_arrow(
@@ -256,11 +279,13 @@ fn main() {
 
             if host_port_str != container_port_str {
                 let container_port_text = Element::draw_small_monospaced_text(
+                    container_port_str,
                     x + 20 + (i as i32 * 80),
                     y + 80,
                     container_group.clone(),
+                    excalidraw_config.font.size,
+                    excalidraw_config.font.family,
                     locked,
-                    container_port_str,
                 );
                 excalidraw_file.elements.push(container_port_text);
             }
@@ -270,8 +295,6 @@ fn main() {
         }
 
         // ------------ Define 'depends_on' relationship ------------
-        excalidraw_file.elements.push(container_text);
-        
         x += container_width + x_margin;
         y += y_margin;
         container_name_rectangle_structs.insert(cn_name, rectangle_struct);     
@@ -279,18 +302,19 @@ fn main() {
 
     for DependencyComponent {id, name, parent} in &components {
         let ContainerPoint(_, x, y) = container_name_to_point.get(name).unwrap();
-        let mut sorted_container_points = if cli.skip_dependencies {
+        let sorted_container_points = if cli.skip_dependencies {
             Vec::<ContainerPoint>::new()
         } else {
-            parent
+            let mut points = parent
                 .iter()
                 .map(|dc| {
                     let cp = container_name_to_point.get(&dc.name).unwrap();
                     ContainerPoint::new(dc.name.clone(), cp.1, cp.2)
                 })
-                .collect::<Vec<ContainerPoint>>()
+                .collect::<Vec<ContainerPoint>>();
+            points.sort_by(|cp1, cp2| cp2.1.cmp(&cp1.1));
+            points
         };
-        sorted_container_points.sort_by(|cp1, cp2| cp2.1.cmp(&cp1.1));
         
         for (i, parent_point) in sorted_container_points.iter().enumerate() {
                 let parent_name = &parent_point.0;
@@ -343,9 +367,21 @@ fn main() {
                 rect.height,
                 rect.group_ids.clone(),
                 rect.bound_elements.clone(),
+                excalidraw_config.services.background_color.clone(),
+                excalidraw_config.services.fill.clone(),
+                locked,
+            );
+            let container_text = Element::draw_small_monospaced_text(
+                rect.container_name.clone(),
+                rect.x + scale,
+                rect.y + scale,
+                rect.text_group_ids.clone(),
+                excalidraw_config.font.size,
+                excalidraw_config.font.family,
                 locked,
             );
             excalidraw_file.elements.push(container_rectangle);
+            excalidraw_file.elements.push(container_text);
         }
     );
     let excalidraw_data = serde_json::to_string(&excalidraw_file).unwrap();

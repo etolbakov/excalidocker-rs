@@ -1,5 +1,30 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct ExcalidrawConfig {
+    pub font: Font,
+    pub services: Services,
+    pub ports: Ports,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Font {
+    pub size: i32,
+    pub family: i32,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Services {
+    pub background_color: String,
+    pub fill: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Ports {
+    pub background_color: String,
+    pub fill: String,
+}
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -393,7 +418,17 @@ impl Element {
         }
     }
     
-    pub fn draw_ellipse(id: String, x: i32, y: i32, width: i32, height: i32, group_ids: Vec<String>, bound_elements: Vec<BoundElement>, locked: bool) -> Self {        
+    pub fn draw_ellipse(
+        id: String, 
+        x: i32, 
+        y: i32, 
+        width: i32, 
+        height: i32, 
+        group_ids: Vec<String>, 
+        bound_elements: Vec<BoundElement>,
+        background_color: String,
+        fill_style: String, 
+        locked: bool) -> Self {        
         Self::ellipse(
             id,
             x,
@@ -404,8 +439,8 @@ impl Element {
             bound_elements,
             elements::ANGLE,
             elements::STROKE_COLOR.into(),
-            elements::BACKGROUND_COLOR.into(),
-            elements::FILL_STYLE.into(),
+            background_color, //elements::BACKGROUND_COLOR.into(),
+            fill_style, //elements::FILL_STYLE.into(),
             elements::STROKE_WIDTH,
             elements::STROKE_STYLE.into(),
             elements::OPACITY,
@@ -414,7 +449,15 @@ impl Element {
         )
     }
 
-    pub fn draw_small_monospaced_text(x: i32, y: i32, group_ids: Vec<String>, locked: bool, text: String) -> Self {
+    pub fn draw_small_monospaced_text(
+        text: String,
+        x: i32, 
+        y: i32, 
+        group_ids: Vec<String>, 
+        font_size: i32,
+        font_family: i32, 
+        locked: bool
+    ) -> Self {
         Self::text(
             x,
             y,
@@ -431,8 +474,8 @@ impl Element {
             elements::STROKE_SHARPNESS.into(),
             locked,
             text,
-            elements::FONT_SIZE_SMALL,
-            elements::FONT_FAMILY_MONOSPACE,
+            font_size, //elements::FONT_SIZE_SMALL,
+            font_family, //elements::FONT_FAMILY_MONOSPACE,
             elements::TEXT_ALIGN_LEFT.into(),
             elements::VERTICAL_ALIGN_TOP.into(),
         )
@@ -499,7 +542,17 @@ impl Element {
         )
     }
 
-    pub fn simple_rectangle(id: String, x: i32, y: i32, width: i32, height: i32, group_ids: Vec<String>, bound_elements: Vec<BoundElement>, locked: bool) -> Self {
+    pub fn simple_rectangle(
+        id: String, 
+        x: i32, 
+        y: i32, 
+        width: i32, 
+        height: i32, 
+        group_ids: Vec<String>, 
+        bound_elements: Vec<BoundElement>,
+        background_color: String,
+        fill_style: String, 
+        locked: bool) -> Self {
         Self::rectangle(
             id,
             x,
@@ -510,8 +563,8 @@ impl Element {
             bound_elements,
             elements::ANGLE,
             elements::STROKE_COLOR.into(),
-            elements::BACKGROUND_COLOR.into(),
-            elements::FILL_STYLE.into(),
+            background_color, //elements::BACKGROUND_COLOR.into(),
+            fill_style, //elements::FILL_STYLE.into(),
             elements::STROKE_WIDTH,
             elements::STROKE_STYLE.into(),
             elements::OPACITY,
