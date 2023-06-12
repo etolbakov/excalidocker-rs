@@ -18,6 +18,7 @@ pub struct Font {
 pub struct Services {
     pub background_color: String,
     pub fill: String,
+    pub edge: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -42,6 +43,13 @@ pub struct Binding {
     pub gap: u16,
 }
 
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Roundness {
+    #[serde(rename = "type")]
+    pub roundness_type: i32,
+}
+
 pub fn binding(element_id: String) -> Binding {
     Binding {
         element_id,
@@ -54,6 +62,12 @@ pub fn arrow_bounded_element(id: String) -> BoundElement{
     BoundElement{
         id, 
         element_type: "arrow".to_string()
+    }
+}
+
+pub fn roundness(edge: String) -> Roundness {
+    Roundness {
+        roundness_type: if edge == "round" { 3 } else { 0 }
     }
 }
 
@@ -163,6 +177,7 @@ pub enum Element {
         stroke_width: i32,
         stroke_style: String,
         roughness: i32,
+        roundness: Roundness,
         opacity: i32,
         stroke_sharpness: String,
         locked: bool,
@@ -354,6 +369,7 @@ impl Element {
         fill_style: String,
         stroke_width: i32,
         stroke_style: String,
+        roundness: Roundness,
         opacity: i32,
         stroke_sharpness: String,
         locked: bool,
@@ -373,6 +389,7 @@ impl Element {
             stroke_width,
             stroke_style,
             roughness: 2, // roughness: 0, - strict
+            roundness,
             opacity,
             stroke_sharpness,
             locked,
@@ -551,7 +568,8 @@ impl Element {
         group_ids: Vec<String>, 
         bound_elements: Vec<BoundElement>,
         background_color: String,
-        fill_style: String, 
+        fill_style: String,
+        edge: String,
         locked: bool) -> Self {
         Self::rectangle(
             id,
@@ -567,6 +585,7 @@ impl Element {
             fill_style, //elements::FILL_STYLE.into(),
             elements::STROKE_WIDTH,
             elements::STROKE_STYLE.into(),
+            roundness(edge),
             elements::OPACITY,
             elements::STROKE_SHARPNESS.into(),
             locked,

@@ -146,7 +146,7 @@ fn main() {
     let mut container_name_to_parents: HashMap<&str, DependencyComponent> = HashMap::new();
     let mut container_name_to_container_struct = HashMap::new();
     
-    let excalidocker_config_contents = match read_file(cli.config_path.as_str()) {
+    let excalidocker_config_contents = match read_yaml_file(cli.config_path.as_str()) {
         Ok(contents) => contents,
         Err(err) => {
             println!("Configuration file issue: {}", err);
@@ -368,6 +368,7 @@ fn main() {
                 rect.bound_elements.clone(),
                 excalidraw_config.services.background_color.clone(),
                 excalidraw_config.services.fill.clone(),
+                excalidraw_config.services.edge.clone(),
                 locked,
             );
             let container_text = Element::draw_small_monospaced_text(
@@ -459,7 +460,7 @@ fn find_additional_width(
 }
 
 fn parse_yaml_file(file_path: &str) -> Result<HashMap<String, serde_yaml::Value>, ExcalidockerError> {    
-    let contents = match read_file(file_path) {
+    let contents = match read_yaml_file(file_path) {
         Ok(contents) => contents,
         Err(err) => return Err(err),
     };
@@ -472,7 +473,7 @@ fn parse_yaml_file(file_path: &str) -> Result<HashMap<String, serde_yaml::Value>
     }
 }
 
-fn read_file(file_path: &str) -> Result<String, ExcalidockerError> {
+fn read_yaml_file(file_path: &str) -> Result<String, ExcalidockerError> {
     if !(file_path.ends_with(".yaml") || file_path.ends_with(".yml")) {
         return Err(FileIncorrectExtension {
             path: file_path.to_string(),
