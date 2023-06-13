@@ -21,7 +21,7 @@ use serde_yaml::Value;
 
 use crate::error::ExcalidockerError::{self,
     InvalidDockerCompose, FileIncorrectExtension, RemoteFileFailedRead,
-    FileNotFound, FileFailedRead, FileFailedParsing
+    FileNotFound, FileFailedRead
 };
 use crate::exporters::excalidraw::elements;
 
@@ -173,7 +173,7 @@ fn main() {
             return;
         },
     };
-    let docker_compose_yaml = match parse_yaml_file(file_content) {
+    let docker_compose_yaml: HashMap<String, Value> = match serde_yaml::from_str(&file_content) {
         Ok(yaml_content) => yaml_content,
         Err(err) => {
             println!("{}", err);
@@ -273,6 +273,7 @@ fn main() {
                 100,
                 locked,
                 elements::STROKE_STYLE.into(),
+                "sharp".to_string(),
                 vec![
                     [0, 0],
                     [(i as i32 * 80) - 35, (i as i32 + 100)]
@@ -311,7 +312,9 @@ fn main() {
 
     for DependencyComponent {id, name, parent} in &components {
         let ContainerPoint(_, x, y) = container_name_to_point.get(name).unwrap();
-        let sorted_container_points = if cli.skip_dependencies {
+        let sorted_container_points = 
+        // any of those two conditions (cli argument or configuration setting) can switch off the connections
+        if cli.skip_dependencies || !excalidraw_config.connections.visible {
             Vec::<ContainerPoint>::new()
         } else {
             let mut points = parent
@@ -348,6 +351,7 @@ fn main() {
                     y_margin,
                     locked,
                     elements::CONNECTION_STYLE.into(),
+                    excalidraw_config.connections.edge.clone(),
                     connecting_arrow_points,
                     binding(id.to_string()),  // child container
                     binding(parent_temp_struct.id.clone()),  // parent container
@@ -482,30 +486,7 @@ fn rewrite_github_url(input: &str) -> String {
     }
 }
 
-// fn parse_yaml_file3(file_path: &str) -> Result<HashMap<String, serde_yaml::Value>, ExcalidockerError> {    
-//     let contents = match read_yaml_file(file_path) {
-//         Ok(contents) => contents,
-//         Err(err) => return Err(err),
-//     };
-//     match serde_yaml::from_str(&contents) {
-//         Ok(yaml) => Ok(yaml),
-//         Err(err) => return Err(FileFailedParsing2 {
-//             path: file_path.to_string(),
-//             msg: err.to_string()
-//         })
-//     }
-// }
-
-fn parse_yaml_file(contents: String) -> Result<HashMap<String, serde_yaml::Value>, ExcalidockerError> {
-    match serde_yaml::from_str(&contents) {
-        Ok(yaml) => Ok(yaml),
-        Err(err) => return Err(FileFailedParsing {
-            msg: err.to_string()
-        })
-    }
-}
-
-fn get_file_content(file_path: &str) -> Result<String, ExcalidockerError> {    
+fn get_file_content(file_path: &str) -> Result<String, ExcalidockerError> {
     if file_path.starts_with("http") {  
         let url = rewrite_github_url(file_path); 
         let mut response = match isahc::get(url) {

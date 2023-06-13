@@ -8,3 +8,6 @@ services: # rectangle
 ports: # ellipse
   background_color: "#a5d8ff"
   fill: "hachure" # "hachure","cross-hatch", "solid"
+connections: # arrow
+  visible: true # true / false
+  edge: "sharp" # "sharp", "round"

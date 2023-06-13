@@ -10,8 +10,6 @@ pub enum ExcalidockerError {
     FileFailedRead{path: String, msg: String},
     #[error("Failed to download '{}'. Details: {}", path, msg)]
     RemoteFileFailedRead{path: String, msg: String},
-    #[error("Failed to parse. Details: {}", msg)]
-    FileFailedParsing{msg: String},       
     #[error("Failed to parse provided docker-compose '{}'. Details: {}", path, msg)]
     InvalidDockerCompose{path: String, msg: String},
 }

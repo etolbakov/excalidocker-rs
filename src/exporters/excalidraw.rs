@@ -6,6 +6,7 @@ pub struct ExcalidrawConfig {
     pub font: Font,
     pub services: Services,
     pub ports: Ports,
+    pub connections: Connections,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -25,6 +26,12 @@ pub struct Services {
 pub struct Ports {
     pub background_color: String,
     pub fill: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Connections {
+    pub visible: bool,
+    pub edge: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -65,9 +72,10 @@ pub fn arrow_bounded_element(id: String) -> BoundElement{
     }
 }
 
-pub fn roundness(edge: String) -> Roundness {
-    Roundness {
-        roundness_type: if edge == "round" { 3 } else { 0 }
+pub fn roundness(edge: String) -> Option<Roundness> {
+    match edge.as_str() {
+        "round" => Some(Roundness {roundness_type: 3}),
+        _ =>  None
     }
 }
 
@@ -153,6 +161,7 @@ pub enum Element {
         fill_style: String,
         stroke_width: i32,
         stroke_style: String,
+        roundness: Option<Roundness>,
         roughness: i32,
         opacity: i32,
         start_binding: Binding,
@@ -177,7 +186,7 @@ pub enum Element {
         stroke_width: i32,
         stroke_style: String,
         roughness: i32,
-        roundness: Roundness,
+        roundness: Option<Roundness>,
         opacity: i32,
         stroke_sharpness: String,
         locked: bool,
@@ -328,6 +337,7 @@ impl Element {
         fill_style: String,
         stroke_width: i32,
         stroke_style: String,
+        roundness: Option<Roundness>,
         opacity: i32,
         stroke_sharpness: String,
         locked: bool,
@@ -347,6 +357,7 @@ impl Element {
             fill_style,
             stroke_width,
             stroke_style,
+            roundness,
             roughness: 2, // roughness: 0
             opacity,
             stroke_sharpness,
@@ -369,7 +380,7 @@ impl Element {
         fill_style: String,
         stroke_width: i32,
         stroke_style: String,
-        roundness: Roundness,
+        roundness: Option<Roundness>,
         opacity: i32,
         stroke_sharpness: String,
         locked: bool,
@@ -535,9 +546,19 @@ impl Element {
         )
     }
 
-    pub fn simple_arrow(id: String, x: i32, y: i32,  width: i32, height: i32, locked: bool, stroke_style: String, points: Vec<[i32; 2]>,
+    pub fn simple_arrow(
+        id: String, 
+        x: i32, 
+        y: i32, 
+        width: i32, 
+        height: i32, 
+        locked: bool, 
+        stroke_style: String,
+        edge: String, 
+        points: Vec<[i32; 2]>,
         start_binding: Binding,
-        end_binding: Binding) -> Self {
+        end_binding: Binding
+    ) -> Self {
         Self::arrow(
             id,
             x,
@@ -552,6 +573,7 @@ impl Element {
             elements::FILL_STYLE.into(),
             elements::STROKE_WIDTH,
             stroke_style,
+            roundness(edge),
             elements::OPACITY,
             elements::STROKE_SHARPNESS.into(),
             locked,

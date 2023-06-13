@@ -2,7 +2,7 @@
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/etolbakov/excalidocker-rs)
 
 Rust-based utility to convert docker-compose.yaml files into [excalidraw](https://excalidraw.com/) files.
-![excalidocker](./data/img/excalidocker-colour.png)
+![excalidocker](./data/img/excalidocker-colour-edge.png)
 
 Table of contents
 =================
@@ -31,12 +31,25 @@ docker pull etolbakov/excalidocker
 ```
 Usage example:
  ```sh
-docker run --rm \
--v "$(pwd)/data/compose/:/tmp/" \
--e INPUT_PATH=/tmp/docker-compose.yaml \
-etolbakov/excalidocker:latest > produced-by-image.excalidraw
+docker run --rm -v "$(pwd)/data/compose/:/tmp/" -e INPUT_PATH=/tmp/docker-compose.yaml etolbakov/excalidocker:latest > produced-by-image.excalidraw
 ```
 The `produced-by-image.excalidraw` file could be opened in [excalidraw](https://excalidraw.com/) and .... hopefully it won't be too scary 👻 😅.
+
+<details>
+  <summary>Command with config</summary>
+  
+  The command below shows how to pass the custom config file
+
+  ```sh
+   docker run --rm \ 
+   -v "$(pwd)/data/compose/:/tmp/" \
+   -v "$(pwd)/excalidocker-config.yaml:/tmp/excalidocker-config.yaml" \
+   -e INPUT_PATH=/tmp/docker-compose.yaml \
+   -e CONFIG_PATH=/tmp/excalidocker-config.yaml \
+   etolbakov/excalidocker:latest > produced-by-image-config-deps.excalidraw
+  ```
+</details>
+
 More command examples are in the [Makefile](/Makefile).
 
 ### Artefact
@@ -74,9 +87,16 @@ Usage example:
 > and you can open it in the future by double-clicking it just as you can any registered app.
 >
 > ![mac-warning](./data/img/mac-warning.png)
-### Config file
+
+### Config file 🎨
 `excalidocker` supports basic customization provided via file, for example [excalidocker-config.yaml](./excalidocker-config.yaml).
-At the moment it's possible to customize font, fill type ("hachure","cross-hatch", "solid") and backgroud colours for services and ports.
+At the moment it's possible to customize:
+ - font size
+ - fill type (`hachure`, `cross-hatch`, `solid`) 
+ - backgroud colours for services and ports
+ - edge type (`sharp`, `round`)
+ - enable/disable connections (has the same effect as `--skip-dependencies` cli option)
+
 
 ## Installation
 To build `excalidocker` locally, please follow these steps:
