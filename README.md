@@ -8,9 +8,10 @@ Rust-based utility to convert docker-compose.yaml files into [excalidraw](https:
 ![excalidocker](./data/img/excalidocker-colour-edge.png)
 
 ## Key features
-
-- todo 1
-- todo 2
+ - Transform your local docker-compose files into excalidraw images with just a single `docker run` command. Showcase your infrastructure designs in a visually appealing and engaging format.
+ - Convert external docker-compose files into excalidraw images by simply providing a Github link. Easy to share and collaborate.
+ - Availible for installation on both Linux and MacOS platforms (amd64/arm64).
+ - Design customization within your docker-compose files. Tailor your infrastructure diagrams to your specific needs by customizing font, background colours, styles, etc.
 
 Table of contents
 =================
@@ -32,26 +33,34 @@ An idea of writing this utility originates from Robin Moffatt's [tweet](https://
 ## Usage
 ### Docker image
 🐳 `excalidocker` is available as a [docker image](https://hub.docker.com/r/etolbakov/excalidocker/tags).
-Convert docker-compose files without hassle. Use it in Github actions for documentation, presentations, ADRs what have you.
+Convert docker-compose files without hassle. Use as a Github action for documentation, presentations, ADRs what have you.
 The sky is the limit. Get the latest image from [docker hub](https://hub.docker.com/r/etolbakov/excalidocker): 
 ```sh
 docker push etolbakov/excalidocker:latest
 ```
-Usage example:
-❌❌❌❌❌❌
-```sh
---input-path https://github.com/etolbakov/excalidocker-rs/blob/main/data/compose/docker-compose.yaml
+
+Convert a local file:
+ ```sh
+docker run --rm \
+-v "$(pwd)/data/compose/:/tmp/" \
+-e INPUT_PATH=/tmp/docker-compose.yaml \
+etolbakov/excalidocker:latest > produced-by-image.excalidraw
 ```
 
- ```sh
-docker run --rm -v "$(pwd)/data/compose/:/tmp/" -e INPUT_PATH=/tmp/docker-compose.yaml etolbakov/excalidocker:latest > produced-by-image.excalidraw
+Convert an external file:
+```sh
+docker run --rm \
+-v "$(pwd)/data/compose/:/tmp/" \
+-e INPUT_PATH=https://github.com/apache/pinot/blob/master/docker/images/pinot/docker-compose.yml \
+etolbakov/excalidocker:latest > produced-by-image-remote.excalidraw
 ```
-The `produced-by-image.excalidraw` file could be opened in [excalidraw](https://excalidraw.com/) and .... hopefully it won't be too scary 👻 😅.
+
+A produced `excalidraw` file could be opened in [excalidraw](https://excalidraw.com/) and .... hopefully it won't be too scary 👻 😅.
 
 <details>
-  <summary>Command with config</summary>
+  <summary>Convert a local file proving a config</summary>
   
-  The command below shows how to pass the custom config file
+  The command below shows how to pass the config file for additional customization
 
   ```sh
    docker run --rm \ 
