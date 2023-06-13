@@ -70,7 +70,10 @@ jobs:
         run: cargo version ; rustc --version ; gcc --version ; g++ --version
 
       - name: Run cargo build
-        run: cargo build --profile ${{ env.CARGO_PROFILE }} --target ${{ matrix.arch }}
+        shell: bash
+        run: |
+          sudo apt install libssl-dev
+          cargo build --profile ${{ env.CARGO_PROFILE }} --target ${{ matrix.arch }}
 
       - name: Calculate checksum and rename binary
         shell: bash
