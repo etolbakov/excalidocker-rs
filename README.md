@@ -9,10 +9,10 @@ Rust-based utility to convert docker-compose.yaml files into [excalidraw](https:
 
 Key features
 =================
- - Transform your local docker-compose files into excalidraw images with just a single `docker run` command. Showcase your infrastructure designs in a visually appealing and engaging format.
- - Convert external docker-compose files into excalidraw images by simply providing a Github link. Easy to share and collaborate.
- - Availible for installation on both Linux and MacOS platforms (amd64/arm64).
- - Design customization within your docker-compose files. Tailor your infrastructure diagrams to your specific needs by customizing font, background colours, styles, etc.
+ - Transform your local docker-compose files into excalidraw with just a single `docker run` command. Showcase your infrastructure designs in a visually appealing and engaging format.
+ - Convert external docker-compose files into excalidraw by simply providing a Github link. Easy to share and collaborate.
+ - Available for installation on both Linux and MacOS platforms (amd64/arm64).
+ - Design customization. Tailor your infrastructure diagrams to your specific needs by customizing font, background colours, styles, etc.
 
 Table of contents
 =================
@@ -20,7 +20,7 @@ Table of contents
    * [Motivation](#motivation)
    * [Usage](#usage)
       * [Docker image](#docker-image)
-      * [Artefact](#artefact)
+      * [Binaries](#binaries)
       * [Config file](#config-file)
       * [Demo](#demo)
    * [Installation](#installation)
@@ -76,8 +76,8 @@ A produced `excalidraw` file could be opened in [excalidraw](https://excalidraw.
 
 More command examples are in the [Makefile](/Makefile).
 
-### Artefact
-📚 Download the latest artifact from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it.
+### Binaries
+📚 Download the latest artifact for your platform/architecture from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it.
 
 To get the `help` menu use:
 ```sh
