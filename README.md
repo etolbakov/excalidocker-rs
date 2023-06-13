@@ -33,6 +33,11 @@ The sky is the limit. Get the latest image from [docker hub](https://hub.docker.
 docker push etolbakov/excalidocker:latest
 ```
 Usage example:
+❌❌❌❌❌❌
+```sh
+--input-path https://github.com/etolbakov/excalidocker-rs/blob/main/data/compose/docker-compose.yaml
+```
+
  ```sh
 docker run --rm -v "$(pwd)/data/compose/:/tmp/" -e INPUT_PATH=/tmp/docker-compose.yaml etolbakov/excalidocker:latest > produced-by-image.excalidraw
 ```
