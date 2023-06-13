@@ -73,6 +73,7 @@ jobs:
         shell: bash
         run: |
           sudo apt install libssl-dev
+          sudo apt install pkg-config
           cargo build --profile ${{ env.CARGO_PROFILE }} --target ${{ matrix.arch }}
 
       - name: Calculate checksum and rename binary
