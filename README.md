@@ -7,6 +7,11 @@
 Rust-based utility to convert docker-compose.yaml files into [excalidraw](https://excalidraw.com/) files.
 ![excalidocker](./data/img/excalidocker-colour-edge.png)
 
+## Key features
+
+- todo 1
+- todo 2
+
 Table of contents
 =================
 <!--ts-->
