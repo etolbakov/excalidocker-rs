@@ -31,7 +31,10 @@ docker pull etolbakov/excalidocker
 ```
 Usage example:
  ```sh
-docker run --rm -v "$(pwd)/data/compose/:/tmp/" -e INPUT_PATH=/tmp/docker-compose.yaml etolbakov/excalidocker:latest > produced-by-image.excalidraw
+docker run --rm \
+-v "$(pwd)/data/compose/:/tmp/" \
+-e INPUT_PATH=/tmp/docker-compose.yaml \
+etolbakov/excalidocker:latest > produced-by-image.excalidraw
 ```
 The `produced-by-image.excalidraw` file could be opened in [excalidraw](https://excalidraw.com/) and .... hopefully it won't be too scary 👻 😅.
 More command examples are in the [Makefile](/Makefile).
