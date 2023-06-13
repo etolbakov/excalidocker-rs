@@ -20,6 +20,7 @@ clap = {version = "4.0.32", features = ["derive"]}
 thiserror = "1.0.40"
 rand = "0.8.5"
 isahc = "1.7"
+openssl = { version = "0.10", features = ["vendored"] }
 
 [profile.release]
 debug = false
