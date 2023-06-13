@@ -7,7 +7,8 @@
 Rust-based utility to convert docker-compose.yaml files into [excalidraw](https://excalidraw.com/) files.
 ![excalidocker](./data/img/excalidocker-colour-edge.png)
 
-## Key features
+Key features
+=================
  - Transform your local docker-compose files into excalidraw images with just a single `docker run` command. Showcase your infrastructure designs in a visually appealing and engaging format.
  - Convert external docker-compose files into excalidraw images by simply providing a Github link. Easy to share and collaborate.
  - Availible for installation on both Linux and MacOS platforms (amd64/arm64).
@@ -21,6 +22,7 @@ Table of contents
       * [Docker image](#docker-image)
       * [Artefact](#artefact)
       * [Config file](#config-file)
+      * [Demo](#demo)
    * [Installation](#installation)
    * [Contributing](#contributing)
    * [Roadmap](#roadmap)
@@ -119,6 +121,10 @@ At the moment it's possible to customize:
  - edge type (`sharp`, `round`)
  - enable/disable connections (has the same effect as `--skip-dependencies` cli option)
 
+### Demo
+🎥 This is a small demo to see the `excalidocker` in action
+
+![excalidocker-demo](./data/img/excalidocker.gif)
 
 ## Installation
 To build `excalidocker` locally, please follow these steps:
