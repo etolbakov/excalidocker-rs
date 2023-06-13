@@ -1,5 +1,6 @@
 # excalidocker-rs
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/etolbakov/excalidocker-rs)
+![Docker Pulls](https://img.shields.io/docker/pulls/etolbakov/excalidocker?style=plastic)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Maintenance](https://img.shields.io/badge/maintenance-actively--developed-brightgreen.svg)
 
@@ -26,10 +27,10 @@ An idea of writing this utility originates from Robin Moffatt's [tweet](https://
 ## Usage
 ### Docker image
 🐳 `excalidocker` is available as a [docker image](https://hub.docker.com/r/etolbakov/excalidocker/tags).
-Convert docker-compose files without hassle. Use it in Github actions for documentation, presentations, ADRs what have you 
+Convert docker-compose files without hassle. Use it in Github actions for documentation, presentations, ADRs what have you.
 The sky is the limit. Get the latest image from [docker hub](https://hub.docker.com/r/etolbakov/excalidocker): 
 ```sh
-docker pull etolbakov/excalidocker
+docker push etolbakov/excalidocker:latest
 ```
 Usage example:
  ```sh
@@ -90,8 +91,8 @@ Usage example:
 >
 > ![mac-warning](./data/img/mac-warning.png)
 
-### Config file 🎨
-`excalidocker` supports basic customization provided via file, for example [excalidocker-config.yaml](./excalidocker-config.yaml).
+### Config file
+🎨 `excalidocker` supports basic customization provided via file, for example [excalidocker-config.yaml](./excalidocker-config.yaml).
 At the moment it's possible to customize:
  - font size and type
  - fill type (`hachure`, `cross-hatch`, `solid`) 
