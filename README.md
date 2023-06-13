@@ -38,7 +38,7 @@ An idea of writing this utility originates from Robin Moffatt's [tweet](https://
 Convert docker-compose files without hassle. Use as a Github action for documentation, presentations, ADRs what have you.
 The sky is the limit. Get the latest image from [docker hub](https://hub.docker.com/r/etolbakov/excalidocker): 
 ```sh
-docker push etolbakov/excalidocker:latest
+docker pull etolbakov/excalidocker:latest
 ```
 
 Convert a local file:
