@@ -1,5 +1,7 @@
 # excalidocker-rs
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/etolbakov/excalidocker-rs)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Maintenance](https://img.shields.io/badge/maintenance-actively--developed-brightgreen.svg)
 
 Rust-based utility to convert docker-compose.yaml files into [excalidraw](https://excalidraw.com/) files.
 ![excalidocker](./data/img/excalidocker-colour-edge.png)
@@ -91,7 +93,7 @@ Usage example:
 ### Config file 🎨
 `excalidocker` supports basic customization provided via file, for example [excalidocker-config.yaml](./excalidocker-config.yaml).
 At the moment it's possible to customize:
- - font size
+ - font size and type
  - fill type (`hachure`, `cross-hatch`, `solid`) 
  - backgroud colours for services and ports
  - edge type (`sharp`, `round`)
