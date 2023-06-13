@@ -28,7 +28,7 @@ use crate::exporters::excalidraw::elements;
 #[derive(Parser)]
 #[command(name = "Excalidocker")]
 #[command(author = "Evgeny Tolbakov <ev.tolbakov@gmail.com>")]
-#[command(version = "0.1.4")]
+#[command(version = "0.1.5")]
 #[command(about = "Utility to convert docker-compose into excalidraw", long_about = None)]
 struct Cli {
     /// file path to the docker-compose.yaml
