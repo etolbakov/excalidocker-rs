@@ -1,8 +1,18 @@
 # excalidocker-rs
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/etolbakov/excalidocker-rs)
+![Docker Pulls](https://img.shields.io/docker/pulls/etolbakov/excalidocker?style=plastic)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Maintenance](https://img.shields.io/badge/maintenance-actively--developed-brightgreen.svg)
 
 Rust-based utility to convert docker-compose.yaml files into [excalidraw](https://excalidraw.com/) files.
-![excalidocker](./data/img/excalidocker-colour.png)
+![excalidocker](./data/img/excalidocker-colour-edge.png)
+
+Key features
+=================
+ - Transform your local docker-compose files into excalidraw with just a single `docker run` command. Showcase your infrastructure designs in a visually appealing and engaging format.
+ - Convert external docker-compose files into excalidraw by simply providing a Github link. Easy to share and collaborate.
+ - Available for installation on both Linux and MacOS platforms (amd64/arm64).
+ - Design customization. Tailor your infrastructure diagrams to your specific needs by customizing font, background colours, styles, etc.
 
 Table of contents
 =================
@@ -10,8 +20,9 @@ Table of contents
    * [Motivation](#motivation)
    * [Usage](#usage)
       * [Docker image](#docker-image)
-      * [Artefact](#artefact)
+      * [Binaries](#binaries)
       * [Config file](#config-file)
+      * [Demo](#demo)
    * [Installation](#installation)
    * [Contributing](#contributing)
    * [Roadmap](#roadmap)
@@ -24,20 +35,49 @@ An idea of writing this utility originates from Robin Moffatt's [tweet](https://
 ## Usage
 ### Docker image
 🐳 `excalidocker` is available as a [docker image](https://hub.docker.com/r/etolbakov/excalidocker/tags).
-Convert docker-compose files without hassle. Use it in Github actions for documentation, presentations, ADRs what have you 
+Convert docker-compose files without hassle. Use as a Github action for documentation, presentations, ADRs what have you.
 The sky is the limit. Get the latest image from [docker hub](https://hub.docker.com/r/etolbakov/excalidocker): 
 ```sh
-docker pull etolbakov/excalidocker
+docker pull etolbakov/excalidocker:latest
 ```
-Usage example:
+
+Convert a local file:
  ```sh
-docker run --rm -v "$(pwd)/data/compose/:/tmp/" -e INPUT_PATH=/tmp/docker-compose.yaml etolbakov/excalidocker:latest > produced-by-image.excalidraw
+docker run --rm \
+-v "$(pwd)/data/compose/:/tmp/" \
+-e INPUT_PATH=/tmp/docker-compose.yaml \
+etolbakov/excalidocker:latest > produced-by-image.excalidraw
 ```
-The `produced-by-image.excalidraw` file could be opened in [excalidraw](https://excalidraw.com/) and .... hopefully it won't be too scary 👻 😅.
+
+Convert an external file:
+```sh
+docker run --rm \
+-v "$(pwd)/data/compose/:/tmp/" \
+-e INPUT_PATH=https://github.com/apache/pinot/blob/master/docker/images/pinot/docker-compose.yml \
+etolbakov/excalidocker:latest > produced-by-image-remote.excalidraw
+```
+
+A produced `excalidraw` file could be opened in [excalidraw](https://excalidraw.com/) and .... hopefully it won't be too scary 👻 😅.
+
+<details>
+  <summary>Convert a local file proving a config</summary>
+  
+  The command below shows how to pass the config file for additional customization
+
+  ```sh
+   docker run --rm \ 
+   -v "$(pwd)/data/compose/:/tmp/" \
+   -v "$(pwd)/excalidocker-config.yaml:/tmp/excalidocker-config.yaml" \
+   -e INPUT_PATH=/tmp/docker-compose.yaml \
+   -e CONFIG_PATH=/tmp/excalidocker-config.yaml \
+   etolbakov/excalidocker:latest > produced-by-image-config-deps.excalidraw
+  ```
+</details>
+
 More command examples are in the [Makefile](/Makefile).
 
-### Artefact
-📚 Download the latest artifact from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it.
+### Binaries
+📚 Download the latest artifact for your platform/architecture from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it.
 
 To get the `help` menu use:
 ```sh
@@ -71,9 +111,20 @@ Usage example:
 > and you can open it in the future by double-clicking it just as you can any registered app.
 >
 > ![mac-warning](./data/img/mac-warning.png)
+
 ### Config file
-`excalidocker` supports basic customization provided via file, for example [excalidocker-config.yaml](./excalidocker-config.yaml).
-At the moment it's possible to customize font, fill type ("hachure","cross-hatch", "solid") and backgroud colours for services and ports.
+🎨 `excalidocker` supports basic customization provided via file, for example [excalidocker-config.yaml](./excalidocker-config.yaml).
+At the moment it's possible to customize:
+ - font size and type
+ - fill type (`hachure`, `cross-hatch`, `solid`) 
+ - backgroud colours for services and ports
+ - edge type (`sharp`, `round`)
+ - enable/disable connections (has the same effect as `--skip-dependencies` cli option)
+
+### Demo
+🎥 This is a small demo to see the `excalidocker` in action
+
+![excalidocker-demo](./data/img/excalidocker.gif)
 
 ## Installation
 To build `excalidocker` locally, please follow these steps:

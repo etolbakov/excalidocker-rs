@@ -13,20 +13,22 @@ use std::fs::File;
 use std::io::Read;
 use std::vec;
 
+use isahc::ReadResponseExt;
+
 use serde::{Serialize, Deserialize};
 use exporters::excalidraw::{ExcalidrawFile, Element};
 use serde_yaml::Value;
 
 use crate::error::ExcalidockerError::{self,
-    InvalidDockerCompose, FileIncorrectExtension, 
-    FileNotFound, FileFailedRead, FileFailedParsing
+    InvalidDockerCompose, FileIncorrectExtension, RemoteFileFailedRead,
+    FileNotFound, FileFailedRead
 };
 use crate::exporters::excalidraw::elements;
 
 #[derive(Parser)]
 #[command(name = "Excalidocker")]
 #[command(author = "Evgeny Tolbakov <ev.tolbakov@gmail.com>")]
-#[command(version = "0.1.4")]
+#[command(version = "0.1.5")]
 #[command(about = "Utility to convert docker-compose into excalidraw", long_about = None)]
 struct Cli {
     /// file path to the docker-compose.yaml
@@ -146,7 +148,7 @@ fn main() {
     let mut container_name_to_parents: HashMap<&str, DependencyComponent> = HashMap::new();
     let mut container_name_to_container_struct = HashMap::new();
     
-    let excalidocker_config_contents = match read_file(cli.config_path.as_str()) {
+    let excalidocker_config_contents = match read_yaml_file(cli.config_path.as_str()) {
         Ok(contents) => contents,
         Err(err) => {
             println!("Configuration file issue: {}", err);
@@ -163,7 +165,15 @@ fn main() {
     };
 
     let input_filepath = cli.input_path.as_str();
-    let docker_compose_yaml = match parse_yaml_file(input_filepath) {
+
+    let file_content = match get_file_content(input_filepath) {
+        Ok(content) => content,
+        Err(err) => {
+            println!("{}", err);
+            return;
+        },
+    };
+    let docker_compose_yaml: HashMap<String, Value> = match serde_yaml::from_str(&file_content) {
         Ok(yaml_content) => yaml_content,
         Err(err) => {
             println!("{}", err);
@@ -263,6 +273,7 @@ fn main() {
                 100,
                 locked,
                 elements::STROKE_STYLE.into(),
+                "sharp".to_string(),
                 vec![
                     [0, 0],
                     [(i as i32 * 80) - 35, (i as i32 + 100)]
@@ -301,7 +312,9 @@ fn main() {
 
     for DependencyComponent {id, name, parent} in &components {
         let ContainerPoint(_, x, y) = container_name_to_point.get(name).unwrap();
-        let sorted_container_points = if cli.skip_dependencies {
+        let sorted_container_points = 
+        // any of those two conditions (cli argument or configuration setting) can switch off the connections
+        if cli.skip_dependencies || !excalidraw_config.connections.visible {
             Vec::<ContainerPoint>::new()
         } else {
             let mut points = parent
@@ -338,6 +351,7 @@ fn main() {
                     y_margin,
                     locked,
                     elements::CONNECTION_STYLE.into(),
+                    excalidraw_config.connections.edge.clone(),
                     connecting_arrow_points,
                     binding(id.to_string()),  // child container
                     binding(parent_temp_struct.id.clone()),  // parent container
@@ -368,6 +382,7 @@ fn main() {
                 rect.bound_elements.clone(),
                 excalidraw_config.services.background_color.clone(),
                 excalidraw_config.services.fill.clone(),
+                excalidraw_config.services.edge.clone(),
                 locked,
             );
             let container_text = Element::draw_small_monospaced_text(
@@ -458,21 +473,45 @@ fn find_additional_width(
     }
 }
 
-fn parse_yaml_file(file_path: &str) -> Result<HashMap<String, serde_yaml::Value>, ExcalidockerError> {    
-    let contents = match read_file(file_path) {
-        Ok(contents) => contents,
-        Err(err) => return Err(err),
-    };
-    match serde_yaml::from_str(&contents) {
-        Ok(yaml) => Ok(yaml),
-        Err(err) => return Err(FileFailedParsing {
-            path: file_path.to_string(),
-            msg: err.to_string()
-        })
+/// When a Github website link provided instead of a link to a raw file
+/// this method rewrites the url thus it's possible to get the referenced file content.
+fn rewrite_github_url(input: &str) -> String {
+    if input.contains("github.com") {
+        input
+            .replace("https://github.com/", "https://raw.githubusercontent.com/")
+            .replace("/blob/", "/")
+            .to_owned()
+    } else {
+        input.to_owned()
     }
 }
 
-fn read_file(file_path: &str) -> Result<String, ExcalidockerError> {
+fn get_file_content(file_path: &str) -> Result<String, ExcalidockerError> {
+    if file_path.starts_with("http") {  
+        let url = rewrite_github_url(file_path); 
+        let mut response = match isahc::get(url) {
+            Ok(rs) => rs,
+            Err(err) => return Err(RemoteFileFailedRead {
+                path: file_path.to_string(),
+                msg: err.to_string()
+            })
+        };
+        match response.text() {
+            Ok(data) => Ok(data.clone()),
+            Err(err) => Err(RemoteFileFailedRead {
+                path: file_path.to_string(),
+                msg: err.to_string()
+            })
+        }
+    } else {
+        match read_yaml_file(file_path) {
+            Ok(contents) => Ok(contents),
+            Err(err) => return Err(err),
+        }
+    }   
+}
+
+fn read_yaml_file(file_path: &str) -> Result<String, ExcalidockerError> {
     if !(file_path.ends_with(".yaml") || file_path.ends_with(".yml")) {
         return Err(FileIncorrectExtension {
             path: file_path.to_string(),
@@ -582,7 +621,32 @@ fn generate_id() -> String {
 // }
           
 #[test]
-fn check_port_parsing() {
+fn test_rewrite_github_url() {
+    
+    let input1 = "https://github.com/etolbakov/excalidocker-rs/blob/main/data/compose/docker-compose-very-large.yaml";        
+    assert_eq!(
+        "https://raw.githubusercontent.com/etolbakov/excalidocker-rs/main/data/compose/docker-compose-very-large.yaml",
+        rewrite_github_url(input1)
+    );    
+    let input2 = "https://github.com/treeverse/lakeFS/blob/master/deployments/compose/docker-compose.yml";
+    assert_eq!(
+        "https://raw.githubusercontent.com/treeverse/lakeFS/master/deployments/compose/docker-compose.yml",
+        rewrite_github_url(input2)
+    );
+    let input3 = "https://github.com/etolbakov/excalidocker-rs/blob/feat/edge-type-support/data/compose/docker-compose-very-large.yaml";
+    assert_eq!(
+        "https://raw.githubusercontent.com/etolbakov/excalidocker-rs/feat/edge-type-support/data/compose/docker-compose-very-large.yaml",
+        rewrite_github_url(input3)
+    );
+    let input4 = "https://raw.githubusercontent.com/etolbakov/excalidocker-rs/blob/edge-type-support/data/compose/docker-compose-very-large.yaml";
+    assert_eq!(
+        "https://raw.githubusercontent.com/etolbakov/excalidocker-rs/blob/edge-type-support/data/compose/docker-compose-very-large.yaml",
+        rewrite_github_url(input4)
+    );
+}
+
+#[test]
+fn test_check_port_parsing() {
     // - "3000"                 # container port (3000), assigned to random host port
     let (host_port, container_port) = extract_host_container_ports("3000");
     assert_eq!(host_port, "3000");

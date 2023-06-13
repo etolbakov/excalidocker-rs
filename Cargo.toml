@@ -1,6 +1,6 @@
 [package]
 name = "excalidocker"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 authors = ["Evgeny Tolbakov"]
 description = "Utility to convert your docker-compose into excalidraw"
@@ -19,6 +19,10 @@ serde_yaml = "0.9.21"
 clap = {version = "4.0.32", features = ["derive"]}
 thiserror = "1.0.40"
 rand = "0.8.5"
+isahc = "1.7"
+
+# https://github.com/sfackler/rust-openssl/issues/1021
+openssl = { version = "0.10", features = ["vendored"] }
 
 [profile.release]
 debug = false

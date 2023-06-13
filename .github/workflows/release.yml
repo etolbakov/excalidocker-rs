@@ -11,7 +11,7 @@ on:
 
 env:
   RUST_TOOLCHAIN: nightly-2023-05-03
-  BUILD_VERSION_PREFIX: v0.1.4
+  BUILD_VERSION_PREFIX: v0.1.5
   CARGO_PROFILE: release
 
 permissions:
@@ -134,6 +134,7 @@ jobs:
         run: cargo version ; rustc --version ; gcc --version ; g++ --version
 
       - name: Run cargo build
+        shell: bash
         run: cargo build --profile ${{ env.CARGO_PROFILE }} --target ${{ matrix.arch }}
 
       - name: Calculate checksum and rename binary
@@ -154,12 +155,11 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.file }}.sha256sum
-          path: target/${{ matrix.arch }}/${{ env.CARGO_PROFILE }}/${{ matrix.file }}.sha256sum  
+          path: target/${{ matrix.arch }}/${{ env.CARGO_PROFILE }}/${{ matrix.file }}.sha256sum
   
   docker:
     name: Build docker image
     needs: [build-linux, build-macos]
-#    needs: [build-linux]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -222,9 +222,8 @@ jobs:
             etolbakov/excalidocker:${{ env.IMAGE_TAG }}            
 
   release:
-    name: Release artifacts    
+    name: Release artifacts
     needs: [build-macos, build-linux, docker]
-#    needs: [build-linux, docker]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
