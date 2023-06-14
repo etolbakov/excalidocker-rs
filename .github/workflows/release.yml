@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - feat/amend-github-actions-release-step
     paths:
       - src/**
       - Cargo.toml
@@ -231,18 +232,33 @@ jobs:
 
       - name: Get the version
         id: get_version
-        run: echo ::set-output name=VERSION::$(grep "^version" Cargo.toml | awk '{print $3}' | tr -d '"')
+        run: echo "VERSION=$(grep "^version" Cargo.toml | awk '{print $3}' | tr -d '"')" >> $GITHUB_ENV
+
+      - name: Get latest release
+        id: get_latest_release
+        run: echo "LATEST_RELEASE=$(curl -ksL https://api.github.com/repos/etolbakov/excalidocker-rs/releases/latest | jq -r '.tag_name')" >> $GITHUB_ENV
+
+      - name: Compare versions and skip release if equal
+          run: |
+            if [ "${{ env.VERSION }}" = "${{ env.LATEST_RELEASE }}" ]; then
+              echo "Latest release version matches current version. Skipping release step."
+              echo "SKIP_RELEASE=true" >> $GITHUB_ENV
+            else
+              echo "Proceeding with release step."
+            fi
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
+        if: env.SKIP_RELEASE != 'true'
 
       - name: Publish release
         uses: ncipollo/release-action@v1
+        if: env.SKIP_RELEASE != 'true'
         with:
-          name: "${{ steps.get_version.outputs.VERSION }}"
+          name: "${{ env.VERSION }}"
           prerelease: false
           makeLatest: true
-          tag: ${{ steps.get_version.outputs.VERSION }}
+          tag: ${{ env.VERSION }}
           generateReleaseNotes: true
           artifacts: |
             **/excalidocker-*
