@@ -52,6 +52,7 @@ jobs:
   build-macos:
     name: Build macOS binary
     needs: [proceedrelease]
+    if: {{ needs.proceedrelease.outputs.PROCEED_WITH_RELEASE}}
     strategy:
       matrix:
         # The file format is excalidocker-<os>-<arch>
@@ -66,7 +67,6 @@ jobs:
             continue-on-error: false
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.continue-on-error }}
-    if: {{ needs.proceedrelease.outputs.PROCEED_WITH_RELEASE == 'true' }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
