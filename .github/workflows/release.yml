@@ -239,13 +239,13 @@ jobs:
         run: echo "LATEST_RELEASE=$(curl -ksL https://api.github.com/repos/etolbakov/excalidocker-rs/releases/latest | jq -r '.tag_name')" >> $GITHUB_ENV
 
       - name: Compare versions and skip release if equal
-          run: |
-            if [ "${{ env.VERSION }}" = "${{ env.LATEST_RELEASE }}" ]; then
-              echo "Latest release version matches current version. Skipping release step."
-              echo "SKIP_RELEASE=true" >> $GITHUB_ENV
-            else
-              echo "Proceeding with release step."
-            fi
+        run: |
+          if [ "${{ env.VERSION }}" = "${{ env.LATEST_RELEASE }}" ]; then
+            echo "Latest release version matches current version. Skipping release step."
+            echo "SKIP_RELEASE=true" >> $GITHUB_ENV
+          else
+            echo "Proceeding with release step."
+          fi
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
