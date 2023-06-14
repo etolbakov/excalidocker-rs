@@ -20,6 +20,35 @@ permissions:
 
 jobs:
 
+  is-release-required:
+    name: Should we create a release for these changes
+    runs-on: ubuntu-latest
+    outputs:
+      PROCEED_WITH_RELEASE: false
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Get the version
+        id: get_version
+        run: echo "VERSION=$(grep "^version" Cargo.toml | awk '{print $3}' | tr -d '"')" >> $GITHUB_ENV
+
+      - name: Get latest release
+        id: get_latest_release
+        run: echo "LATEST_RELEASE=$(curl -ksL https://api.github.com/repos/etolbakov/excalidocker-rs/releases/latest | jq -r '.tag_name')" >> $GITHUB_ENV
+
+      - name: Compare versions and skip release if equal
+        run: |
+          echo ${{ env.VERSION }}
+          echo ${{ env.LATEST_RELEASE }}
+          if [ "${{ env.VERSION }}" = "${{ env.LATEST_RELEASE }}" ]; then
+            echo "PROCEED_WITH_RELEASE=false" >> $GITHUB_OUTPUT
+            echo "Latest release version matches current version. Skipping building & release steps."            
+          else
+            echo "PROCEED_WITH_RELEASE=true" >> $GITHUB_OUTPUT
+            echo "Proceeding with building & release steps."          
+          fi
+
   build-macos:
     name: Build macOS binary
     strategy:
@@ -36,6 +65,7 @@ jobs:
             continue-on-error: false
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.continue-on-error }}
+    if: {{ needs.is-release-required.outputs.PROCEED_WITH_RELEASE == 'true' }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -101,6 +131,7 @@ jobs:
             continue-on-error: false
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.continue-on-error }}
+    if: {{ needs.is-release-required.outputs.PROCEED_WITH_RELEASE == 'true' }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -162,6 +193,7 @@ jobs:
     name: Build docker image
     needs: [build-linux, build-macos]
     runs-on: ubuntu-latest
+    if: {{ needs.is-release-required.outputs.PROCEED_WITH_RELEASE == 'true' }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -222,10 +254,12 @@ jobs:
             etolbakov/excalidocker:latest
             etolbakov/excalidocker:${{ env.IMAGE_TAG }}            
 
+
   release:
     name: Release artifacts
     needs: [build-macos, build-linux, docker]
     runs-on: ubuntu-latest
+    if: {{ needs.is-release-required.outputs.PROCEED_WITH_RELEASE == 'true' }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -238,22 +272,11 @@ jobs:
         id: get_latest_release
         run: echo "LATEST_RELEASE=$(curl -ksL https://api.github.com/repos/etolbakov/excalidocker-rs/releases/latest | jq -r '.tag_name')" >> $GITHUB_ENV
 
-      - name: Compare versions and skip release if equal
-        run: |
-          if [ "${{ env.VERSION }}" = "${{ env.LATEST_RELEASE }}" ]; then
-            echo "Latest release version matches current version. Skipping release step."
-            echo "SKIP_RELEASE=true" >> $GITHUB_ENV
-          else
-            echo "Proceeding with release step."
-          fi
-
       - name: Download artifacts
         uses: actions/download-artifact@v3
-        if: env.SKIP_RELEASE != 'true'
 
       - name: Publish release
         uses: ncipollo/release-action@v1
-        if: env.SKIP_RELEASE != 'true'
         with:
           name: "${{ env.VERSION }}"
           prerelease: false
