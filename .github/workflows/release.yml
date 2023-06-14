@@ -20,7 +20,7 @@ permissions:
 
 jobs:
 
-  is-release-required:
+  proceedrelease:
     name: Should we create a release for these changes
     runs-on: ubuntu-latest
     outputs:
@@ -51,6 +51,7 @@ jobs:
 
   build-macos:
     name: Build macOS binary
+    needs: [proceedrelease]
     strategy:
       matrix:
         # The file format is excalidocker-<os>-<arch>
@@ -65,7 +66,7 @@ jobs:
             continue-on-error: false
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.continue-on-error }}
-    if: {{ needs.is-release-required.outputs.PROCEED_WITH_RELEASE == 'true' }}
+    if: {{ needs.proceedrelease.outputs.PROCEED_WITH_RELEASE == 'true' }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -117,6 +118,7 @@ jobs:
 
   build-linux:
     name: Build linux binary
+    needs: [proceedrelease]
     strategy:
       matrix:
         # The file format is excalidocker-<os>-<arch>
@@ -131,7 +133,7 @@ jobs:
             continue-on-error: false
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.continue-on-error }}
-    if: {{ needs.is-release-required.outputs.PROCEED_WITH_RELEASE == 'true' }}
+    if: {{ needs.proceedrelease.outputs.PROCEED_WITH_RELEASE == 'true' }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -191,9 +193,9 @@ jobs:
   
   docker:
     name: Build docker image
-    needs: [build-linux, build-macos]
+    needs: [proceedrelease, build-linux, build-macos]
     runs-on: ubuntu-latest
-    if: {{ needs.is-release-required.outputs.PROCEED_WITH_RELEASE == 'true' }}
+    if: {{ needs.proceedrelease.outputs.PROCEED_WITH_RELEASE == 'true' }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -257,9 +259,9 @@ jobs:
 
   release:
     name: Release artifacts
-    needs: [build-macos, build-linux, docker]
+    needs: [proceedrelease, build-macos, build-linux, docker]
     runs-on: ubuntu-latest
-    if: {{ needs.is-release-required.outputs.PROCEED_WITH_RELEASE == 'true' }}
+    if: {{ needs.proceedrelease.outputs.PROCEED_WITH_RELEASE == 'true' }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
