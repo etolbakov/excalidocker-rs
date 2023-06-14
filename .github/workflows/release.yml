@@ -19,8 +19,38 @@ permissions:
 
 jobs:
 
+  proceed_release:
+    name: Create new release for these changes?
+    runs-on: ubuntu-latest
+    outputs:
+      PROCEED_WITH_RELEASE: false
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Get the version
+        id: get_version
+        run: echo "VERSION=$(grep "^version" Cargo.toml | awk '{print $3}' | tr -d '"')" >> $GITHUB_ENV
+
+      - name: Get latest release
+        id: get_latest_release
+        run: echo "LATEST_RELEASE=$(curl -ksL https://api.github.com/repos/etolbakov/excalidocker-rs/releases/latest | jq -r '.tag_name')" >> $GITHUB_ENV
+
+      - name: Compare versions and skip release if equal
+        run: |
+          echo "Version: '${{ env.VERSION }}' | latest release: '${{ env.LATEST_RELEASE }}'"
+          if [ "${{ env.VERSION }}" = "${{ env.LATEST_RELEASE }}" ]; then
+            echo "PROCEED_WITH_RELEASE=false" >> $GITHUB_OUTPUT
+            echo "Latest release version matches current version. Skipping building & release steps."            
+          else
+            echo "PROCEED_WITH_RELEASE=true" >> $GITHUB_OUTPUT
+            echo "Proceeding with building & release steps."          
+          fi
+
   build-macos:
     name: Build macOS binary
+    needs: [proceed_release]
+    if: needs.proceed_release.outputs.PROCEED_WITH_RELEASE == 'true'
     strategy:
       matrix:
         # The file format is excalidocker-<os>-<arch>
@@ -86,6 +116,8 @@ jobs:
 
   build-linux:
     name: Build linux binary
+    needs: [proceed_release]
+    if: needs.proceed_release.outputs.PROCEED_WITH_RELEASE == 'true'
     strategy:
       matrix:
         # The file format is excalidocker-<os>-<arch>
@@ -159,7 +191,8 @@ jobs:
   
   docker:
     name: Build docker image
-    needs: [build-linux, build-macos]
+    needs: [proceed_release, build-linux, build-macos]
+    if: needs.proceed_release.outputs.PROCEED_WITH_RELEASE == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -221,9 +254,11 @@ jobs:
             etolbakov/excalidocker:latest
             etolbakov/excalidocker:${{ env.IMAGE_TAG }}            
 
+
   release:
     name: Release artifacts
-    needs: [build-macos, build-linux, docker]
+    needs: [proceed_release, build-macos, build-linux, docker]
+    if: needs.proceed_release.outputs.PROCEED_WITH_RELEASE == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -231,7 +266,11 @@ jobs:
 
       - name: Get the version
         id: get_version
-        run: echo ::set-output name=VERSION::$(grep "^version" Cargo.toml | awk '{print $3}' | tr -d '"')
+        run: echo "VERSION=$(grep "^version" Cargo.toml | awk '{print $3}' | tr -d '"')" >> $GITHUB_ENV
+
+      - name: Get latest release
+        id: get_latest_release
+        run: echo "LATEST_RELEASE=$(curl -ksL https://api.github.com/repos/etolbakov/excalidocker-rs/releases/latest | jq -r '.tag_name')" >> $GITHUB_ENV
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
@@ -239,10 +278,10 @@ jobs:
       - name: Publish release
         uses: ncipollo/release-action@v1
         with:
-          name: "${{ steps.get_version.outputs.VERSION }}"
+          name: "${{ env.VERSION }}"
           prerelease: false
           makeLatest: true
-          tag: ${{ steps.get_version.outputs.VERSION }}
+          tag: ${{ env.VERSION }}
           generateReleaseNotes: true
           artifacts: |
             **/excalidocker-*
