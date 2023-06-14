@@ -34,30 +34,30 @@ An idea of writing this utility originates from Robin Moffatt's [tweet](https://
 
 ## Usage
 ### Docker image
-🐳 `excalidocker` is available as a [docker image](https://hub.docker.com/r/etolbakov/excalidocker/tags).
+🐳 `excalidocker` is available as a [Docker image](https://hub.docker.com/r/etolbakov/excalidocker/tags).
 Convert docker-compose files without hassle. Use as a Github action for documentation, presentations, ADRs what have you.
-The sky is the limit. Get the latest image from [docker hub](https://hub.docker.com/r/etolbakov/excalidocker): 
-```sh
-docker pull etolbakov/excalidocker:latest
-```
+The sky is the limit. 
 
 Convert a local file:
+
  ```sh
-docker run --rm \
--v "$(pwd)/data/compose/:/tmp/" \
--e INPUT_PATH=/tmp/docker-compose.yaml \
-etolbakov/excalidocker:latest > produced-by-image.excalidraw
+docker run --rm --pull always \
+           -v "$(pwd)/data/compose/:/tmp/" \
+           -e INPUT_PATH=/tmp/docker-compose.yaml \
+           etolbakov/excalidocker:latest \
+           > produced-by-image.excalidraw
 ```
 
 Convert an external file:
+
 ```sh
-docker run --rm \
--v "$(pwd)/data/compose/:/tmp/" \
--e INPUT_PATH=https://github.com/apache/pinot/blob/master/docker/images/pinot/docker-compose.yml \
-etolbakov/excalidocker:latest > produced-by-image-remote.excalidraw
+docker run --rm --pull always \
+           -e INPUT_PATH=https://github.com/apache/pinot/blob/master/docker/images/pinot/docker-compose.yml \
+           etolbakov/excalidocker:latest \
+           > produced-by-image-remote.excalidraw
 ```
 
-A produced `excalidraw` file could be opened in [excalidraw](https://excalidraw.com/) and .... hopefully it won't be too scary 👻 😅.
+The produced `excalidraw` file can be opened in [excalidraw](https://excalidraw.com/) and .... hopefully it won't be too scary 👻 😅.
 
 <details>
   <summary>Convert a local file proving a config</summary>
