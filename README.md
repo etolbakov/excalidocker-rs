@@ -65,12 +65,13 @@ The produced `excalidraw` file can be opened in [excalidraw](https://excalidraw.
   The command below shows how to pass the config file for additional customization
 
   ```sh
-   docker run --rm \ 
-   -v "$(pwd)/data/compose/:/tmp/" \
-   -v "$(pwd)/excalidocker-config.yaml:/tmp/excalidocker-config.yaml" \
-   -e INPUT_PATH=/tmp/docker-compose.yaml \
-   -e CONFIG_PATH=/tmp/excalidocker-config.yaml \
-   etolbakov/excalidocker:latest > produced-by-image-config-deps.excalidraw
+   docker run --rm --pull always \
+             -v "$(pwd)/data/compose/:/tmp/" \
+             -v "$(pwd)/excalidocker-config.yaml:/tmp/excalidocker-config.yaml" \
+             -e INPUT_PATH=/tmp/docker-compose.yaml \
+             -e CONFIG_PATH=/tmp/excalidocker-config.yaml \
+             etolbakov/excalidocker:latest \
+             > produced-by-image-config-deps.excalidraw
   ```
 </details>
 
