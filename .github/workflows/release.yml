@@ -20,7 +20,7 @@ permissions:
 
 jobs:
 
-  proceedrelease:
+  proceed_release:
     name: Should we create a release for these changes
     runs-on: ubuntu-latest
     outputs:
@@ -51,8 +51,8 @@ jobs:
 
   build-macos:
     name: Build macOS binary
-    needs: [proceedrelease]
-    if: {{ needs.proceedrelease.outputs.PROCEED_WITH_RELEASE}}
+    needs: [proceed_release]
+    if: needs.proceed_release.outputs.PROCEED_WITH_RELEASE == 'true'
     strategy:
       matrix:
         # The file format is excalidocker-<os>-<arch>
@@ -118,7 +118,8 @@ jobs:
 
   build-linux:
     name: Build linux binary
-    needs: [proceedrelease]
+    needs: [proceed_release]
+    if: needs.proceed_release.outputs.PROCEED_WITH_RELEASE == 'true'
     strategy:
       matrix:
         # The file format is excalidocker-<os>-<arch>
@@ -133,7 +134,6 @@ jobs:
             continue-on-error: false
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.continue-on-error }}
-    if: {{ needs.proceedrelease.outputs.PROCEED_WITH_RELEASE == 'true' }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -193,9 +193,9 @@ jobs:
   
   docker:
     name: Build docker image
-    needs: [proceedrelease, build-linux, build-macos]
+    needs: [proceed_release, build-linux, build-macos]
+    if: needs.proceed_release.outputs.PROCEED_WITH_RELEASE == 'true'
     runs-on: ubuntu-latest
-    if: {{ needs.proceedrelease.outputs.PROCEED_WITH_RELEASE == 'true' }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -259,9 +259,9 @@ jobs:
 
   release:
     name: Release artifacts
-    needs: [proceedrelease, build-macos, build-linux, docker]
+    needs: [proceed_release, build-macos, build-linux, docker]
+    if: needs.proceed_release.outputs.PROCEED_WITH_RELEASE == 'true'
     runs-on: ubuntu-latest
-    if: {{ needs.proceedrelease.outputs.PROCEED_WITH_RELEASE == 'true' }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
