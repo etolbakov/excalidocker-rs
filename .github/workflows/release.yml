@@ -21,7 +21,7 @@ permissions:
 jobs:
 
   proceed_release:
-    name: Should we create a release for these changes
+    name: Create new release for these changes?
     runs-on: ubuntu-latest
     outputs:
       PROCEED_WITH_RELEASE: false
@@ -39,8 +39,7 @@ jobs:
 
       - name: Compare versions and skip release if equal
         run: |
-          echo ${{ env.VERSION }}
-          echo ${{ env.LATEST_RELEASE }}
+          echo "Version: '${{ env.VERSION }}' | latest release: '${{ env.LATEST_RELEASE }}'"
           if [ "${{ env.VERSION }}" = "${{ env.LATEST_RELEASE }}" ]; then
             echo "PROCEED_WITH_RELEASE=false" >> $GITHUB_OUTPUT
             echo "Latest release version matches current version. Skipping building & release steps."            
