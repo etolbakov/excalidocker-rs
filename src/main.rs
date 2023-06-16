@@ -17,7 +17,7 @@ use isahc::ReadResponseExt;
 
 use serde::{Serialize, Deserialize};
 use exporters::excalidraw::{ExcalidrawFile, Element};
-use serde_yaml::Value;
+use serde_yaml::{Value, Mapping};
 
 use crate::error::ExcalidockerError::{self,
     InvalidDockerCompose, FileIncorrectExtension, RemoteFileFailedRead,
@@ -28,7 +28,7 @@ use crate::exporters::excalidraw::elements;
 #[derive(Parser)]
 #[command(name = "Excalidocker")]
 #[command(author = "Evgeny Tolbakov <ev.tolbakov@gmail.com>")]
-#[command(version = "0.1.5")]
+#[command(version = "0.1.6")]
 #[command(about = "Utility to convert docker-compose into excalidraw", long_about = None)]
 struct Cli {
     /// file path to the docker-compose.yaml
@@ -173,8 +173,13 @@ fn main() {
             return;
         },
     };
-    let docker_compose_yaml: HashMap<String, Value> = match serde_yaml::from_str(&file_content) {
-        Ok(yaml_content) => yaml_content,
+
+    let docker_compose_yaml = match serde_yaml::from_str::<Value>(&file_content) {
+        Ok(mut yaml_content) => {
+            let _ = yaml_content.apply_merge();
+            let mapping = yaml_content.as_mapping().unwrap_or(&Mapping::new()).to_owned();
+            mapping
+        },
         Err(err) => {
             println!("{}", err);
             return;
@@ -595,8 +600,7 @@ fn convert_to_container(id: String, value: &Value) -> Option<DockerContainer> {
                 }
             }
             "depends_on" => {
-                if let Value::Sequence(depends_on) = value {
-                    let depends_on = depends_on.iter().filter_map(|port| port.as_str().map(|p| p.to_string())).collect();
+                if let Some(depends_on) = parse_depends_on(value.clone()) {
                     container.depends_on = Some(depends_on);
                 }
             }
@@ -606,6 +610,27 @@ fn convert_to_container(id: String, value: &Value) -> Option<DockerContainer> {
     }
     Some(container)
 }
+
+fn parse_depends_on(value: Value) -> Option<Vec<String>> {
+    match value {
+        Value::Sequence(depends_on) => {
+            let depends_on_vec: Vec<String> = depends_on
+                .iter()
+                .filter_map(|item| item.as_str().map(|s| s.to_string()))
+                .collect();
+            Some(depends_on_vec)
+        }
+        Value::Mapping(depends_on) => {
+            let depends_on_vec: Vec<String> = depends_on
+                .keys()
+                .filter_map(|key| key.as_str().map(|s| s.to_string()))
+                .collect();
+            Some(depends_on_vec)
+        }
+        _ => None,
+    }
+}
+
 
 fn generate_id() -> String {
     rand::thread_rng()
