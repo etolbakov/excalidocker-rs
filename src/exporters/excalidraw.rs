@@ -65,17 +65,17 @@ pub fn binding(element_id: String) -> Binding {
     }
 }
 
-pub fn arrow_bounded_element(id: String) -> BoundElement{
-    BoundElement{
-        id, 
-        element_type: "arrow".to_string()
+pub fn arrow_bounded_element(id: String) -> BoundElement {
+    BoundElement {
+        id,
+        element_type: "arrow".to_string(),
     }
 }
 
 pub fn roundness(edge: String) -> Option<Roundness> {
     match edge.as_str() {
-        "round" => Some(Roundness {roundness_type: 3}),
-        _ =>  None
+        "round" => Some(Roundness { roundness_type: 3 }),
+        _ => None,
     }
 }
 
@@ -210,7 +210,7 @@ pub enum Element {
         opacity: i32,
         stroke_sharpness: String,
         locked: bool,
-    }
+    },
 }
 
 pub mod elements {
@@ -221,24 +221,14 @@ pub mod elements {
     pub const STROKE_WIDTH: i32 = 1;
     pub const STROKE_STYLE: &str = "solid";
     pub const CONNECTION_STYLE: &str = "dashed";
-    pub const ROUGHNESS: i32 = 0;
     pub const OPACITY: i32 = 100;
     pub const STROKE_SHARPNESS: &str = "sharp";
-    pub const LOCKED: bool = false;
     pub const FONT_SIZE_SMALL: i32 = 16;
     pub const FONT_SIZE_MEDIUM: i32 = 20;
     pub const FONT_SIZE_LARGE: i32 = 28;
     pub const FONT_SIZE_EXTRA_LARGE: i32 = 36;
-    pub const FONT_FAMILY_HAND_DRAWN: i32 = 1;
-    pub const FONT_FAMILY_NORMAL: i32 = 2;
-    pub const FONT_FAMILY_MONOSPACE: i32 = 3;
     pub const TEXT_ALIGN_LEFT: &str = "left";
-    pub const TEXT_ALIGN_CENTER: &str = "center";
-    pub const TEXT_ALIGN_RIGHT: &str = "right";
     pub const VERTICAL_ALIGN_TOP: &str = "top";
-    pub const VERTICAL_ALIGN_CENTER: &str = "center";
-    pub const VERTICAL_ALIGN_BOTTOM: &str = "bottom";
-    pub const BASELINE: i32 = 15;
 }
 
 impl Element {
@@ -445,18 +435,19 @@ impl Element {
             locked,
         }
     }
-    
+
     pub fn draw_ellipse(
-        id: String, 
-        x: i32, 
-        y: i32, 
-        width: i32, 
-        height: i32, 
-        group_ids: Vec<String>, 
+        id: String,
+        x: i32,
+        y: i32,
+        width: i32,
+        height: i32,
+        group_ids: Vec<String>,
         bound_elements: Vec<BoundElement>,
         background_color: String,
-        fill_style: String, 
-        locked: bool) -> Self {        
+        fill_style: String,
+        locked: bool,
+    ) -> Self {
         Self::ellipse(
             id,
             x,
@@ -468,7 +459,7 @@ impl Element {
             elements::ANGLE,
             elements::STROKE_COLOR.into(),
             background_color, //elements::BACKGROUND_COLOR.into(),
-            fill_style, //elements::FILL_STYLE.into(),
+            fill_style,       //elements::FILL_STYLE.into(),
             elements::STROKE_WIDTH,
             elements::STROKE_STYLE.into(),
             elements::OPACITY,
@@ -479,12 +470,12 @@ impl Element {
 
     pub fn draw_small_monospaced_text(
         text: String,
-        x: i32, 
-        y: i32, 
-        group_ids: Vec<String>, 
+        x: i32,
+        y: i32,
+        group_ids: Vec<String>,
         font_size: i32,
-        font_family: i32, 
-        locked: bool
+        font_family: i32,
+        locked: bool,
     ) -> Self {
         Self::text(
             x,
@@ -502,14 +493,20 @@ impl Element {
             elements::STROKE_SHARPNESS.into(),
             locked,
             text,
-            font_size, //elements::FONT_SIZE_SMALL,
+            font_size,   //elements::FONT_SIZE_SMALL,
             font_family, //elements::FONT_FAMILY_MONOSPACE,
             elements::TEXT_ALIGN_LEFT.into(),
             elements::VERTICAL_ALIGN_TOP.into(),
         )
     }
 
-    pub fn simple_line(x: i32, y: i32, locked: bool, stroke_style: String, points: Vec<[i32; 2]>) -> Self {
+    pub fn simple_line(
+        x: i32,
+        y: i32,
+        locked: bool,
+        stroke_style: String,
+        points: Vec<[i32; 2]>,
+    ) -> Self {
         let mut min_x = 0;
         let mut max_x = 0;
         let mut min_y = 0;
@@ -547,23 +544,23 @@ impl Element {
     }
 
     pub fn simple_arrow(
-        id: String, 
-        x: i32, 
-        y: i32, 
-        width: i32, 
-        height: i32, 
-        locked: bool, 
+        id: String,
+        x: i32,
+        y: i32,
+        width: i32,
+        height: i32,
+        locked: bool,
         stroke_style: String,
-        edge: String, 
+        edge: String,
         points: Vec<[i32; 2]>,
         start_binding: Binding,
-        end_binding: Binding
+        end_binding: Binding,
     ) -> Self {
         Self::arrow(
             id,
             x,
             y,
-            width, // TODO 
+            width, // TODO
             height,
             start_binding,
             end_binding,
@@ -582,17 +579,18 @@ impl Element {
     }
 
     pub fn simple_rectangle(
-        id: String, 
-        x: i32, 
-        y: i32, 
-        width: i32, 
-        height: i32, 
-        group_ids: Vec<String>, 
+        id: String,
+        x: i32,
+        y: i32,
+        width: i32,
+        height: i32,
+        group_ids: Vec<String>,
         bound_elements: Vec<BoundElement>,
         background_color: String,
         fill_style: String,
         edge: String,
-        locked: bool) -> Self {
+        locked: bool,
+    ) -> Self {
         Self::rectangle(
             id,
             x,
@@ -604,7 +602,7 @@ impl Element {
             elements::ANGLE,
             elements::STROKE_COLOR.into(),
             background_color, //elements::BACKGROUND_COLOR.into(),
-            fill_style, //elements::FILL_STYLE.into(),
+            fill_style,       //elements::FILL_STYLE.into(),
             elements::STROKE_WIDTH,
             elements::STROKE_STYLE.into(),
             roundness(edge),

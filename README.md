@@ -20,6 +20,7 @@ Table of contents
    * [Motivation](#motivation)
    * [Usage](#usage)
       * [Docker image](#docker-image)
+      * [Brew](#brew)
       * [Binaries](#binaries)
       * [Config file](#config-file)
       * [Demo](#demo)
@@ -76,6 +77,15 @@ The produced `excalidraw` file can be opened in [excalidraw](https://excalidraw.
 </details>
 
 More command examples are in the [Makefile](/Makefile).
+### Brew
+To install `excalidocker` with `brew` run the following command: 
+```
+brew install etolbakov/taps/excalidocker
+```
+To uninstall:
+```
+brew uninstall etolbakov/taps/excalidocker
+```
 
 ### Binaries
 📚 Download the latest artifact for your platform/architecture from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it.
