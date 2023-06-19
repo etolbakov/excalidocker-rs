@@ -177,8 +177,7 @@ fn main() {
     let docker_compose_yaml = match serde_yaml::from_str::<Value>(&file_content) {
         Ok(mut yaml_content) => {
             let _ = yaml_content.apply_merge();
-            let mapping = yaml_content.as_mapping().unwrap_or(&Mapping::new()).to_owned();
-            mapping
+            yaml_content.as_mapping().unwrap_or(&Mapping::new()).to_owned()
         },
         Err(err) => {
             println!("{}", err);
@@ -317,8 +316,8 @@ fn main() {
 
     for DependencyComponent {id, name, parent} in &components {
         let ContainerPoint(_, x, y) = container_name_to_point.get(name).unwrap();
-        let sorted_container_points = 
-        // any of those two conditions (cli argument or configuration setting) can switch off the connections
+         // any of those two conditions (cli argument or configuration setting) can switch off the connections
+        let sorted_container_points =        
         if cli.skip_dependencies || !excalidraw_config.connections.visible {
             Vec::<ContainerPoint>::new()
         } else {
@@ -468,10 +467,12 @@ fn find_additional_width(
         &FONT_SIZE_EXTRA_LARGE => (2, 1),
         _ => (1, 1),        
     };
-    let text_accommodation_len_default = 5; 
-    let text_accommodation_margin = 1; 
+    let text_accommodation_len_default = 5;
+    let text_accommodation_margin = 1;
     if container_name_len > container_name_len_max {
-        let required_space_for_text = ((container_name_len / elements_per_item_grid) - text_accommodation_len_default + text_accommodation_margin) as i32;
+        let required_space_for_text = ((container_name_len / elements_per_item_grid)
+            - text_accommodation_len_default
+            + text_accommodation_margin) as i32;
         scale * required_space_for_text
     } else {
         0
@@ -492,51 +493,57 @@ fn rewrite_github_url(input: &str) -> String {
 }
 
 fn get_file_content(file_path: &str) -> Result<String, ExcalidockerError> {
-    if file_path.starts_with("http") {  
-        let url = rewrite_github_url(file_path); 
+    if file_path.starts_with("http") {
+        let url = rewrite_github_url(file_path);
         let mut response = match isahc::get(url) {
             Ok(rs) => rs,
-            Err(err) => return Err(RemoteFileFailedRead {
-                path: file_path.to_string(),
-                msg: err.to_string()
-            })
+            Err(err) => {
+                return Err(RemoteFileFailedRead {
+                    path: file_path.to_string(),
+                    msg: err.to_string(),
+                })
+            }
         };
         match response.text() {
             Ok(data) => Ok(data.clone()),
             Err(err) => Err(RemoteFileFailedRead {
                 path: file_path.to_string(),
-                msg: err.to_string()
-            })
+                msg: err.to_string(),
+            }),
         }
     } else {
         match read_yaml_file(file_path) {
             Ok(contents) => Ok(contents),
             Err(err) => return Err(err),
         }
-    }   
+    }
 }
 
 fn read_yaml_file(file_path: &str) -> Result<String, ExcalidockerError> {
     if !(file_path.ends_with(".yaml") || file_path.ends_with(".yml")) {
         return Err(FileIncorrectExtension {
             path: file_path.to_string(),
-        })
+        });
     }
     let mut file = match File::open(file_path) {
         Ok(file) => file,
-        Err(err) => return Err(FileNotFound {
-            path: file_path.to_string(),
-            msg: err.to_string()
-        })
+        Err(err) => {
+            return Err(FileNotFound {
+                path: file_path.to_string(),
+                msg: err.to_string(),
+            })
+        }
     };
     let mut contents = String::new();
     return match file.read_to_string(&mut contents) {
         Ok(_) => Ok(contents),
-        Err(err) => Err(FileFailedRead {
-            path: file_path.to_string(),
-            msg: err.to_string()
-        })
-    }
+        Err(err) => {
+            return Err(FileNotFound {
+                path: file_path.to_string(),
+                msg: err.to_string(),
+            })
+        }
+    };
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -589,13 +596,19 @@ fn convert_to_container(id: String, value: &Value) -> Option<DockerContainer> {
             }
             "ports" => {
                 if let Value::Sequence(ports) = value {
-                    let port_strings = ports.iter().filter_map(|port| port.as_str().map(|p| p.to_string())).collect();
+                    let port_strings = ports
+                        .iter()
+                        .filter_map(|port| port.as_str().map(|p| p.to_string()))
+                        .collect();
                     container.ports = Some(port_strings);
                 }
             }
             "volumes" => {
                 if let Value::Sequence(volumes) = value {
-                    let volume_strings = volumes.iter().filter_map(|volume| volume.as_str().map(|v| v.to_string())).collect();
+                    let volume_strings = volumes
+                        .iter()
+                        .filter_map(|volume| volume.as_str().map(|v| v.to_string()))
+                        .collect();
                     container.volumes = Some(volume_strings);
                 }
             }
@@ -604,7 +617,7 @@ fn convert_to_container(id: String, value: &Value) -> Option<DockerContainer> {
                     container.depends_on = Some(depends_on);
                 }
             }
-             // TODO: Handle other fields
+            // TODO: Handle other fields
             _ => (),
         }
     }
@@ -631,7 +644,6 @@ fn parse_depends_on(value: Value) -> Option<Vec<String>> {
     }
 }
 
-
 fn generate_id() -> String {
     rand::thread_rng()
         .sample_iter(&Alphanumeric)
@@ -644,16 +656,16 @@ fn generate_id() -> String {
 // fn check_parsing() {
 //
 // }
-          
+
 #[test]
 fn test_rewrite_github_url() {
-    
-    let input1 = "https://github.com/etolbakov/excalidocker-rs/blob/main/data/compose/docker-compose-very-large.yaml";        
+    let input1 = "https://github.com/etolbakov/excalidocker-rs/blob/main/data/compose/docker-compose-very-large.yaml";
     assert_eq!(
         "https://raw.githubusercontent.com/etolbakov/excalidocker-rs/main/data/compose/docker-compose-very-large.yaml",
         rewrite_github_url(input1)
-    );    
-    let input2 = "https://github.com/treeverse/lakeFS/blob/master/deployments/compose/docker-compose.yml";
+    );
+    let input2 =
+        "https://github.com/treeverse/lakeFS/blob/master/deployments/compose/docker-compose.yml";
     assert_eq!(
         "https://raw.githubusercontent.com/treeverse/lakeFS/master/deployments/compose/docker-compose.yml",
         rewrite_github_url(input2)
@@ -676,7 +688,7 @@ fn test_check_port_parsing() {
     let (host_port, container_port) = extract_host_container_ports("3000");
     assert_eq!(host_port, "3000");
     assert_eq!(container_port, "3000");
-    
+
     // - "3001-3005"            # container port range (3001-3005), assigned to random host ports
     let (host_port, container_port) = extract_host_container_ports("3001-3005");
     assert_eq!(host_port, "3001-3005");
@@ -691,7 +703,7 @@ fn test_check_port_parsing() {
     let (host_port, container_port) = extract_host_container_ports("9090-9091:8080-8081");
     assert_eq!(host_port, "9090-9091");
     assert_eq!(container_port, "8080-8081");
-        
+
     // - "127.0.0.1:8002:8002"  # container port (8002), assigned to given host port (8002) and bind to 127.0.0.1
     let (host_port, container_port) = extract_host_container_ports("127.0.0.1:8002:8002");
     assert_eq!(host_port, "127.0.0.1:8002");
