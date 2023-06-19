@@ -23,7 +23,7 @@ jobs:
     name: Create new release for these changes?
     runs-on: ubuntu-latest
     outputs:
-      PROCEED_WITH_RELEASE: false
+      PROCEED_WITH_RELEASE: ${{ steps.decision.outputs.PROCEED_WITH_RELEASE }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -36,7 +36,8 @@ jobs:
         id: get_latest_release
         run: echo "LATEST_RELEASE=$(curl -ksL https://api.github.com/repos/etolbakov/excalidocker-rs/releases/latest | jq -r '.tag_name')" >> $GITHUB_ENV
 
-      - name: Compare versions and skip release if equal
+      - id: decision
+        name: Compare versions and skip release if equal
         run: |
           echo "Version: '${{ env.VERSION }}' | latest release: '${{ env.LATEST_RELEASE }}'"
           if [ "${{ env.VERSION }}" = "${{ env.LATEST_RELEASE }}" ]; then
