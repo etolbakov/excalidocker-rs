@@ -445,7 +445,7 @@ fn main() {
 /// There are several to declare ports in docker-compose
 ///  - "0" single port value(range of values): a container port(range) will be assigned to random host port(range)
 ///  - "1" colon separated values (range of values): container port (range) is assigned to given host port (range)
-///  - "_" detailed decrlaration which may include `host_ip`, `protocol` etc
+///  - "_" detailed declaration which may include `host_ip`, `protocol` etc
 fn extract_host_container_ports(port: &str) -> (String, String) {
     let port_parts: Vec<_> = port.rmatch_indices(':').collect();
     let port_string = port.to_string();
