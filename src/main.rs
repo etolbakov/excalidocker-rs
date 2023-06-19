@@ -22,8 +22,7 @@ use serde::{Deserialize, Serialize};
 use serde_yaml::{Mapping, Value};
 
 use crate::error::ExcalidockerError::{
-    self, FileFailedRead, FileIncorrectExtension, FileNotFound, InvalidDockerCompose,
-    RemoteFileFailedRead,
+    self, FileIncorrectExtension, FileNotFound, InvalidDockerCompose, RemoteFileFailedRead,
 };
 use crate::exporters::excalidraw::elements;
 
@@ -402,35 +401,32 @@ fn main() {
         }
     }
 
-    container_name_rectangle_structs
-        .values()
-        .into_iter()
-        .for_each(|rect| {
-            let container_rectangle = Element::simple_rectangle(
-                rect.id.clone(),
-                rect.x,
-                rect.y,
-                rect.width,
-                rect.height,
-                rect.group_ids.clone(),
-                rect.bound_elements.clone(),
-                excalidraw_config.services.background_color.clone(),
-                excalidraw_config.services.fill.clone(),
-                excalidraw_config.services.edge.clone(),
-                locked,
-            );
-            let container_text = Element::draw_small_monospaced_text(
-                rect.container_name.clone(),
-                rect.x + scale,
-                rect.y + scale,
-                rect.text_group_ids.clone(),
-                excalidraw_config.font.size,
-                excalidraw_config.font.family,
-                locked,
-            );
-            excalidraw_file.elements.push(container_rectangle);
-            excalidraw_file.elements.push(container_text);
-        });
+    container_name_rectangle_structs.values().for_each(|rect| {
+        let container_rectangle = Element::simple_rectangle(
+            rect.id.clone(),
+            rect.x,
+            rect.y,
+            rect.width,
+            rect.height,
+            rect.group_ids.clone(),
+            rect.bound_elements.clone(),
+            excalidraw_config.services.background_color.clone(),
+            excalidraw_config.services.fill.clone(),
+            excalidraw_config.services.edge.clone(),
+            locked,
+        );
+        let container_text = Element::draw_small_monospaced_text(
+            rect.container_name.clone(),
+            rect.x + scale,
+            rect.y + scale,
+            rect.text_group_ids.clone(),
+            excalidraw_config.font.size,
+            excalidraw_config.font.family,
+            locked,
+        );
+        excalidraw_file.elements.push(container_rectangle);
+        excalidraw_file.elements.push(container_text);
+    });
     let excalidraw_data = serde_json::to_string(&excalidraw_file).unwrap();
     match cli.output_path {
         Some(output_file_path) => {
@@ -495,11 +491,11 @@ fn find_containers_traversal_order(
 ///  28 | 1   letter in grid
 ///  36 | 1   letter in grid
 fn find_additional_width(container_name_len: usize, scale: &i32, font_size: &i32) -> i32 {
-    let (container_name_len_max, elements_per_item_grid) = match font_size {
-        &FONT_SIZE_SMALL => (14, 3),
-        &FONT_SIZE_MEDIUM => (9, 2),
-        &FONT_SIZE_LARGE => (5, 1),
-        &FONT_SIZE_EXTRA_LARGE => (2, 1),
+    let (container_name_len_max, elements_per_item_grid) = match *font_size {
+        FONT_SIZE_SMALL => (14, 3),
+        FONT_SIZE_MEDIUM => (9, 2),
+        FONT_SIZE_LARGE => (5, 1),
+        FONT_SIZE_EXTRA_LARGE => (2, 1),
         _ => (1, 1),
     };
     let text_accommodation_len_default = 5;
@@ -521,7 +517,6 @@ fn rewrite_github_url(input: &str) -> String {
         input
             .replace("https://github.com/", "https://raw.githubusercontent.com/")
             .replace("/blob/", "/")
-            .to_owned()
     } else {
         input.to_owned()
     }
@@ -540,17 +535,14 @@ fn get_file_content(file_path: &str) -> Result<String, ExcalidockerError> {
             }
         };
         match response.text() {
-            Ok(data) => Ok(data.clone()),
+            Ok(data) => Ok(data),
             Err(err) => Err(RemoteFileFailedRead {
                 path: file_path.to_string(),
                 msg: err.to_string(),
             }),
         }
     } else {
-        match read_yaml_file(file_path) {
-            Ok(contents) => Ok(contents),
-            Err(err) => return Err(err),
-        }
+        read_yaml_file(file_path)
     }
 }
 
@@ -570,15 +562,13 @@ fn read_yaml_file(file_path: &str) -> Result<String, ExcalidockerError> {
         }
     };
     let mut contents = String::new();
-    return match file.read_to_string(&mut contents) {
+    match file.read_to_string(&mut contents) {
         Ok(_) => Ok(contents),
-        Err(err) => {
-            return Err(FileNotFound {
-                path: file_path.to_string(),
-                msg: err.to_string(),
-            })
-        }
-    };
+        Err(err) => Err(FileNotFound {
+            path: file_path.to_string(),
+            msg: err.to_string(),
+        }),
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

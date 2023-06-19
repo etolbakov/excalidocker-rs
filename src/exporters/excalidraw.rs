@@ -221,24 +221,14 @@ pub mod elements {
     pub const STROKE_WIDTH: i32 = 1;
     pub const STROKE_STYLE: &str = "solid";
     pub const CONNECTION_STYLE: &str = "dashed";
-    pub const ROUGHNESS: i32 = 0;
     pub const OPACITY: i32 = 100;
     pub const STROKE_SHARPNESS: &str = "sharp";
-    pub const LOCKED: bool = false;
     pub const FONT_SIZE_SMALL: i32 = 16;
     pub const FONT_SIZE_MEDIUM: i32 = 20;
     pub const FONT_SIZE_LARGE: i32 = 28;
     pub const FONT_SIZE_EXTRA_LARGE: i32 = 36;
-    pub const FONT_FAMILY_HAND_DRAWN: i32 = 1;
-    pub const FONT_FAMILY_NORMAL: i32 = 2;
-    pub const FONT_FAMILY_MONOSPACE: i32 = 3;
     pub const TEXT_ALIGN_LEFT: &str = "left";
-    pub const TEXT_ALIGN_CENTER: &str = "center";
-    pub const TEXT_ALIGN_RIGHT: &str = "right";
     pub const VERTICAL_ALIGN_TOP: &str = "top";
-    pub const VERTICAL_ALIGN_CENTER: &str = "center";
-    pub const VERTICAL_ALIGN_BOTTOM: &str = "bottom";
-    pub const BASELINE: i32 = 15;
 }
 
 impl Element {

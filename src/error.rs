@@ -9,8 +9,6 @@ pub enum ExcalidockerError {
     FileIncorrectExtension { path: String },
     #[error("Failed to open '{}'. Details: {}", path, msg)]
     FileNotFound { path: String, msg: String },
-    #[error("Failed to read '{}'. Details: {}", path, msg)]
-    FileFailedRead { path: String, msg: String },
     #[error("Failed to download '{}'. Details: {}", path, msg)]
     RemoteFileFailedRead { path: String, msg: String },
     #[error("Failed to parse provided docker-compose '{}'. Details: {}", path, msg)]
