@@ -166,8 +166,10 @@ fn main() {
         }
     };
 
-    let networks = docker_compose_yaml.get("networks");
-    // dbg!(networks);
+    let networks = docker_compose_yaml.get("networks")
+        .map(|v| parse_networks(v))
+        .flatten();
+    dbg!(networks);
 
     let mut identifier: i32 = 1;
     for (container_name_val, container_data_val) in services.as_mapping().unwrap() {
@@ -482,6 +484,7 @@ struct DockerContainer {
     depends_on: Option<Vec<String>>,
     ports: Option<Vec<String>>, // HOST:CONTAINER
     volumes: Option<Vec<String>>,
+    networks: Option<Vec<String>>,
     // TODO: add other fields
 }
 
@@ -495,6 +498,7 @@ fn convert_to_container(id: String, value: &Value) -> Option<DockerContainer> {
         ports: None,
         volumes: None,
         depends_on: None,
+        networks: None,
     };
 
     for (key, value) in mapping {
@@ -544,6 +548,11 @@ fn convert_to_container(id: String, value: &Value) -> Option<DockerContainer> {
                     container.depends_on = Some(depends_on);
                 }
             }
+            "networks" => {
+                if let Some(networks) = parse_networks(value) {
+                    container.networks = Some(networks);
+                }
+            }
             // TODO: Handle other fields
             _ => (),
         }
@@ -568,6 +577,26 @@ fn parse_depends_on(value: Value) -> Option<Vec<String>> {
             Some(depends_on_vec)
         }
         _ => None,
+    }
+}
+
+fn parse_networks(value: &Value) -> Option<Vec<String>> {
+    match value {        
+        Value::Sequence(networks) => {
+            let networks_strings: Vec<String> = networks
+                .iter()
+                .filter_map(|network| network.as_str().map(|nw| nw.to_string()))
+                .collect();
+            Some(networks_strings)
+        }        
+        Value::Mapping(networks) => {
+            let networks_vec: Vec<String> = networks
+                .keys()
+                .filter_map(|key| key.as_str().map(|s| s.to_string()))
+                .collect();
+            Some(networks_vec)
+        } 
+        _ => None
     }
 }
 
