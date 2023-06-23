@@ -1,4 +1,8 @@
 use serde::{Deserialize, Serialize};
+use crate::exporters::excalidraw_config::consts::{
+    NO_X_ALIGNMENT_FACTOR, NO_X_MARGIN, NO_Y_ALIGNMENT_FACTOR, X_MARGIN,
+    NO_Y_MARGIN, X_ALIGNMENT_FACTOR, Y_ALIGNMENT_FACTOR, Y_MARGIN
+};
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct ExcalidrawConfig {
@@ -84,44 +88,29 @@ pub fn roundness(edge: String) -> Option<Roundness> {
     }
 }
 
-// TODO no magic numbers - extract to consts!
-///// option: 1 horizontal
-// let x_margin = 60;
-// let y_margin = 0;
+pub mod consts {
+    pub const NO_X_MARGIN: i32 = 0;
+    pub const NO_Y_MARGIN: i32 = 0;
+    pub const X_MARGIN: i32 = 60;
+    pub const Y_MARGIN: i32 = 60;
+    pub const X_ALIGNMENT_FACTOR :i32  = 1;
+    pub const NO_X_ALIGNMENT_FACTOR :i32  = 0;
+    pub const Y_ALIGNMENT_FACTOR :i32  = 1;
+    pub const NO_Y_ALIGNMENT_FACTOR :i32  = 0;
+}
 
-///// option: 2 vertical
-// let x_margin = 0;
-// let y_margin = 60;
-
-// option: 3 'stepped'
-// let x_margin = 60;
-// let y_margin = 60;
-pub fn margins(alignment_mode: String)-> (i32, i32) {
-    dbg!(alignment_mode.clone());
+/// Based on the previous implementation it was observed
+/// for 'horizontal' and 'stepped' alignment
+/// x += x_margin + container_width;
+/// y += y_margin;
+///
+/// and for 'vertical' alignment
+/// x += x_margin;
+/// y += y_margin + scale;
+pub fn margins(alignment_mode: String)-> (i32, i32, i32, i32) {
     match alignment_mode.as_str() {
-        "horizontal" => (60, 0),
-        "vertical" => (0, 60),
-        "stepped" => (60, 60),
-        _ => (60, 60),
+        "horizontal" => (X_MARGIN, NO_Y_MARGIN, X_ALIGNMENT_FACTOR, NO_Y_ALIGNMENT_FACTOR),
+        "vertical" => (NO_X_MARGIN, Y_MARGIN, NO_X_ALIGNMENT_FACTOR, Y_ALIGNMENT_FACTOR),
+        _ => (X_MARGIN, Y_MARGIN, X_ALIGNMENT_FACTOR, NO_Y_ALIGNMENT_FACTOR), // "stepped" is default
     }
 } 
-
-/*
-pub mod elements {
-    pub const ANGLE: i32 = 0;
-    pub const STROKE_COLOR: &str = "#000000";
-    pub const BACKGROUND_COLOR: &str = "transparent";
-    pub const FILL_STYLE: &str = "hachure";
-    pub const STROKE_WIDTH: i32 = 1;
-    pub const STROKE_STYLE: &str = "solid";
-    pub const CONNECTION_STYLE: &str = "dashed";
-    pub const OPACITY: i32 = 100;
-    pub const STROKE_SHARPNESS: &str = "sharp";
-    pub const FONT_SIZE_SMALL: i32 = 16;
-    pub const FONT_SIZE_MEDIUM: i32 = 20;
-    pub const FONT_SIZE_LARGE: i32 = 28;
-    pub const FONT_SIZE_EXTRA_LARGE: i32 = 36;
-    pub const TEXT_ALIGN_LEFT: &str = "left";
-    pub const VERTICAL_ALIGN_TOP: &str = "top";
-}
- */

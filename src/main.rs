@@ -149,7 +149,12 @@ fn main() {
     let input_filepath = cli.input_path.as_str();
     let docker_compose_yaml = file_utils::get_docker_compose_content(input_filepath);
 
-    let (x_margin, y_margin) =  margins(excalidraw_config.alignment.mode);
+    let (
+        x_margin,
+        y_margin,
+        x_alignment_factor,
+        y_alignment_factor,
+    ) =  margins(excalidraw_config.alignment.mode);
 
     let services = match docker_compose_yaml.get("services") {
         Some(services) => services,
@@ -286,12 +291,9 @@ fn main() {
             excalidraw_file.elements.push(host_port_arrow);
         }
 
-        // ------------ Define 'depends_on' relationship ------------
-        x += x_margin + container_width;        
-        y += y_margin;
-
-        // x += x_margin;           // TODO this is for vertical alignment
-        // y += y_margin + scale;   // TODO this is for vertical alignment
+        // ------------ Define Alignment ------------
+        x += x_margin + x_alignment_factor * container_width;
+        y += y_margin + y_alignment_factor * scale;
 
         container_name_rectangle_structs.insert(cn_name, rectangle_struct);
     }

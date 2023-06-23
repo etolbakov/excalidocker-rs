@@ -12,4 +12,4 @@ connections: # arrow
   visible: true # true / false
   edge: "sharp" # "sharp", "round"
 alignment:
-  mode: "stepped" # "horizontal", "vertical", "stepped"(default)
+  mode: "vertical" # "stepped" (default), "vertical", "vertical",  "grouped"(to be supported)
