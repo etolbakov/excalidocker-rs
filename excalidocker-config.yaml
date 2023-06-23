@@ -11,3 +11,5 @@ ports: # ellipse
 connections: # arrow
   visible: true # true / false
   edge: "sharp" # "sharp", "round"
+alignment:
+  mode: "stepped" # "horizontal", "vertical", "stepped"(default)

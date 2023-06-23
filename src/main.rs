@@ -6,8 +6,8 @@ use clap::{arg, command, Parser};
 use exporters::excalidraw::elements::{
     FONT_SIZE_EXTRA_LARGE, FONT_SIZE_LARGE, FONT_SIZE_MEDIUM, FONT_SIZE_SMALL,
 };
-use exporters::excalidraw::ExcalidrawConfig;
-use exporters::excalidraw::{arrow_bounded_element, binding, BoundElement};
+use exporters::excalidraw_config::{ExcalidrawConfig, margins};
+use exporters::excalidraw_config::{arrow_bounded_element, binding, BoundElement};
 use rand::{distributions::Alphanumeric, Rng};
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -139,9 +139,6 @@ fn main() {
     let port_diameter = 60;
     let locked = false;
 
-    let x_margin = 60;
-    let y_margin = 60;
-
     let mut components = Vec::new();
     let mut container_name_rectangle_structs = HashMap::new();
     let mut container_name_to_point = HashMap::new();
@@ -151,6 +148,8 @@ fn main() {
     let excalidraw_config: ExcalidrawConfig = file_utils::get_excalidraw_config(cli.config_path.as_str());
     let input_filepath = cli.input_path.as_str();
     let docker_compose_yaml = file_utils::get_docker_compose_content(input_filepath);
+
+    let (x_margin, y_margin) =  margins(excalidraw_config.alignment.mode);
 
     let services = match docker_compose_yaml.get("services") {
         Some(services) => services,
@@ -166,10 +165,10 @@ fn main() {
         }
     };
 
-    let networks = docker_compose_yaml.get("networks")
+    let _networks = docker_compose_yaml.get("networks")
         .map(|v| parse_networks(v))
         .flatten();
-    dbg!(networks);
+    // dbg!(networks);
 
     let mut identifier: i32 = 1;
     for (container_name_val, container_data_val) in services.as_mapping().unwrap() {
@@ -288,8 +287,12 @@ fn main() {
         }
 
         // ------------ Define 'depends_on' relationship ------------
-        x += container_width + x_margin;
+        x += x_margin + container_width;        
         y += y_margin;
+
+        // x += x_margin;           // TODO this is for vertical alignment
+        // y += y_margin + scale;   // TODO this is for vertical alignment
+
         container_name_rectangle_structs.insert(cn_name, rectangle_struct);
     }
 

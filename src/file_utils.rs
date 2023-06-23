@@ -7,7 +7,7 @@ use serde_yaml::{Mapping, Value};
 
 use crate::{error::ExcalidockerError::{
     self, FileIncorrectExtension, FileNotFound, RemoteFileFailedRead,
-}, exporters::excalidraw::ExcalidrawConfig};
+}, exporters::excalidraw_config::ExcalidrawConfig};
 
 
 pub fn get_excalidraw_config(file_path: &str) -> ExcalidrawConfig {
