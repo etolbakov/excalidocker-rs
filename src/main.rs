@@ -24,21 +24,18 @@ use crate::exporters::excalidraw::elements;
 #[derive(Parser)]
 #[command(name = "Excalidocker")]
 #[command(author = "Evgeny Tolbakov <ev.tolbakov@gmail.com>")]
-#[command(version = "0.1.6")]
+#[command(version = "0.1.7")]
 #[command(about = "Utility to convert docker-compose into excalidraw", long_about = None)]
-#[command(override_usage(
-    "
+#[command(override_usage("
 ╰→ excalidocker [OPTIONS] --input-path <INPUT_PATH>
-╰→ excalidocker [OPTIONS] --show-config "
-    ))]
+╰→ excalidocker [OPTIONS] --show-config"))]
 struct Cli {
     /// show configuration file
-    //#[arg(short='C', long, default_value_t = false)]
-    #[arg(long)]
-    canister: bool,
+    #[arg(short='C', long, default_value_t = false)]
+    show_config: bool,
     /// file path to the docker-compose.yaml
-    #[arg(short, long, required_unless_present ="canister")]
-    input_path: Option<String>,
+    #[arg(short, long, required_unless_present ="show_config")]
+    input_path: Option<String>,,
     /// display connecting lines between services; if `true` then only service without the lines are rendered
     #[arg(short, long, default_value_t = false)]
     skip_dependencies: bool,
@@ -52,7 +49,6 @@ struct Cli {
 }
 
 pub const CONFIG_DEFAULT_PATH: &str = "excalidocker-config.yaml";
-pub const AAAA_DEFAULT: &str = "sdfslkjqlfkjqkldqw-config.yaml";
 
 #[derive(Debug, Clone)]
 struct ContainerPoint(String, i32, i32);
@@ -155,10 +151,8 @@ fn main() {
     let mut container_name_to_parents: HashMap<&str, DependencyComponent> = HashMap::new();
     let mut container_name_to_container_struct = HashMap::new();
 
-    // TODO show config to generate a config 
-    let excalidraw_config: ExcalidrawConfig = file_utils::get_excalidraw_config(cli.config_path.as_str());
-    //if cli.show_config.unwrap_or(false) {
-    if cli.canister {        
+    let excalidraw_config: ExcalidrawConfig = file_utils::get_excalidraw_config(cli.config_path.as_str());       
+    if cli.show_config {
         println!("{}", serde_yaml::to_string(&excalidraw_config).unwrap());
         return;
     }
