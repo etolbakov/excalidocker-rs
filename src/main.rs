@@ -238,6 +238,7 @@ fn main() {
         // ------------ Define ports ------------
         let ports = container_struct.clone().ports.unwrap_or(Vec::new());
         for (i, port) in ports.iter().enumerate() {
+            let i = i as i32;
             let (container_adjustment_x,container_adjustment_y) = get_container_xy(alignment_mode, &scale, i);
             let container_x = x + container_adjustment_x;
             let container_y = y + container_adjustment_y;
@@ -335,6 +336,7 @@ fn main() {
             };
 
         for (i, parent_point) in sorted_container_points.iter().enumerate() {
+            let i = i as i32;
             let parent_name = &parent_point.0;
             let parent_temp_struct = container_name_rectangle_structs
                 .get_mut(parent_name)
@@ -369,7 +371,7 @@ fn main() {
                 elements::CONNECTION_STYLE.into(),
                 excalidraw_config.connections.edge.clone(),
                 connecting_arrow_points,
-                binding(id.to_string()),                // child container
+                binding(id.to_string()),              // child container
                 binding(parent_temp_struct.id.clone()), // parent container
             );
 
@@ -451,14 +453,14 @@ fn get_connecting_arrow_points(
     interation_x_margin: &i32,
     scale: &i32,
     level_height: i32,
-    i: usize
+    i: i32
 ) -> Vec<[i32; 2]> {
     if alignment_mode == "vertical" {
         vec![
             [0, 0],
-            [-1 * 2 * (i + 1) as i32 * scale, 0],
+            [-1 * 2 * (i + 1) * scale, 0],
             [
-                -1 * 2 * (i + 1) as i32 * scale,
+                -1 * 2 * (i + 1) * scale,
                 // level_height
                 level_height + scale,
             ],
@@ -494,26 +496,26 @@ fn get_alignment_factor_xy(
    (
         x_alignment_factor * container_width,
         if alignment_mode == "vertical" {
-            y_alignment_factor * 2 * scale
+            y_alignment_factor * 2 * scale // TODO should we increase the step or make it configurable??
         } else {
             y_alignment_factor * scale
         }
     )
 }
 
-fn get_container_port_text_xy(alignment_mode: &str, height: &i32, width: &i32, i: usize) -> (i32, i32) {
+fn get_container_port_text_xy(alignment_mode: &str, height: &i32, width: &i32, i: i32) -> (i32, i32) {
     if alignment_mode == "vertical" {
-        (width + 20, height / 2 + (i as i32 * 40) - 35)
+        (width + 20, height / 2 + (i * 40) - 35)
     } else {
-        (20 + (i as i32 * 80), 80)
+        (20 + i * 80, 80)
     }
 }
 
-fn get_host_port_arrow_points(alignment_mode: &str, i: usize) -> Vec<[i32; 2]> {
+fn get_host_port_arrow_points(alignment_mode: &str, i: i32) -> Vec<[i32; 2]> {
     if alignment_mode == "vertical" {
-        vec![[0, 0], [(i as i32 + 100), (i as i32 * 80) - 35]]
+        vec![[0, 0], [i + 100, i * 80 - 35]]
     } else {
-        vec![[0, 0], [(i as i32 * 80) - 35, (i as i32 + 100)]]
+        vec![[0, 0], [i * 80 - 35, i + 100]]
     }
 }
 
@@ -525,11 +527,11 @@ fn get_host_port_arrow_xy(alignment_mode: &str, height: &i32, width: &i32) -> (i
     }
 }
 
-fn get_container_xy(alignment_mode: &str, scale: &i32, i: usize) -> (i32, i32) {
+fn get_container_xy(alignment_mode: &str, scale: &i32, i: i32) -> (i32, i32) {
     if alignment_mode == "vertical" {
-        (scale * 8 + 80, i as i32 * 80 - 35)
+        (scale * 8 + 80, i * 80 - 35)
     } else {
-        (i as i32 * 80, scale * 8)
+        (i * 80, scale * 8)
     }
 }
 
