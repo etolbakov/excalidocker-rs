@@ -26,10 +26,19 @@ use crate::exporters::excalidraw::elements;
 #[command(author = "Evgeny Tolbakov <ev.tolbakov@gmail.com>")]
 #[command(version = "0.1.6")]
 #[command(about = "Utility to convert docker-compose into excalidraw", long_about = None)]
+#[command(override_usage(
+    "
+╰→ excalidocker [OPTIONS] --input-path <INPUT_PATH>
+╰→ excalidocker [OPTIONS] --show-config "
+    ))]
 struct Cli {
+    /// show configuration file
+    //#[arg(short='C', long, default_value_t = false)]
+    #[arg(long)]
+    canister: bool,
     /// file path to the docker-compose.yaml
-    #[arg(short, long)]
-    input_path: String,
+    #[arg(short, long, required_unless_present ="canister")]
+    input_path: Option<String>,
     /// display connecting lines between services; if `true` then only service without the lines are rendered
     #[arg(short, long, default_value_t = false)]
     skip_dependencies: bool,
@@ -43,6 +52,7 @@ struct Cli {
 }
 
 pub const CONFIG_DEFAULT_PATH: &str = "excalidocker-config.yaml";
+pub const AAAA_DEFAULT: &str = "sdfslkjqlfkjqkldqw-config.yaml";
 
 #[derive(Debug, Clone)]
 struct ContainerPoint(String, i32, i32);
@@ -145,16 +155,24 @@ fn main() {
     let mut container_name_to_parents: HashMap<&str, DependencyComponent> = HashMap::new();
     let mut container_name_to_container_struct = HashMap::new();
 
+    // TODO show config to generate a config 
     let excalidraw_config: ExcalidrawConfig = file_utils::get_excalidraw_config(cli.config_path.as_str());
-    let input_filepath = cli.input_path.as_str();
+    //if cli.show_config.unwrap_or(false) {
+    if cli.canister {        
+        println!("{}", serde_yaml::to_string(&excalidraw_config).unwrap());
+        return;
+    }
+    let input_path = &cli.input_path.unwrap();
+    let input_filepath = input_path.as_str();
     let docker_compose_yaml = file_utils::get_docker_compose_content(input_filepath);
 
+    let alignment_mode = excalidraw_config.alignment.mode.as_str();
     let (
         x_margin,
         y_margin,
         x_alignment_factor,
         y_alignment_factor,
-    ) =  margins(excalidraw_config.alignment.mode);
+    ) =  margins(alignment_mode);
 
     let services = match docker_compose_yaml.get("services") {
         Some(services) => services,
@@ -225,8 +243,9 @@ fn main() {
         // ------------ Define ports ------------
         let ports = container_struct.clone().ports.unwrap_or(Vec::new());
         for (i, port) in ports.iter().enumerate() {
-            let container_x = x + (i as i32 * 80);
-            let container_y = y + scale * 8;
+            let container_x = x + get_container_x(alignment_mode, &scale, i);
+            let container_y = y + get_container_y(alignment_mode, &scale, i);
+
             let (host_port_str, container_port_str) = extract_host_container_ports(port);
             let ellipse_port_group = vec![format!("group_{}_hostport_{}_text", cn_name, i)];
 
@@ -257,14 +276,14 @@ fn main() {
 
             let host_port_arrow = Element::simple_arrow(
                 host_port_arrow_id.clone(),
-                x + 70,
-                y + 60,
+                x + get_host_port_arrow_x(alignment_mode, &width),
+                y + get_host_port_arrow_y(alignment_mode, &height),
                 200,
                 100,
                 locked,
                 elements::STROKE_STYLE.into(),
                 "sharp".to_string(),
-                vec![[0, 0], [(i as i32 * 80) - 35, (i as i32 + 100)]],
+                get_host_port_arrow_points(alignment_mode, i),
                 binding(container_struct.id.clone()),
                 binding(ellipse_host_port_id),
             );
@@ -277,8 +296,8 @@ fn main() {
             if host_port_str != container_port_str {
                 let container_port_text = Element::draw_small_monospaced_text(
                     container_port_str,
-                    x + 20 + (i as i32 * 80),
-                    y + 80,
+                    x + get_container_port_text_x(alignment_mode, &width, i),
+                    y + get_container_port_text_y(alignment_mode, &height, i),
                     container_group.clone(),
                     excalidraw_config.font.size,
                     excalidraw_config.font.family,
@@ -292,8 +311,8 @@ fn main() {
         }
 
         // ------------ Define Alignment ------------
-        x += x_margin + x_alignment_factor * container_width;
-        y += y_margin + y_alignment_factor * scale;
+        x += x_margin + get_x_alignment_factor(alignment_mode, x_alignment_factor, container_width);
+        y += y_margin + get_y_alignment_factor(alignment_mode, y_alignment_factor, scale);
 
         container_name_rectangle_structs.insert(cn_name, rectangle_struct);
     }
@@ -326,23 +345,24 @@ fn main() {
             let y_parent = &parent_point.2;
             let level_height = y_parent - y;
             let interation_x_margin = (i + 1) as i32 * scale;
-            let connecting_arrow_points = vec![
-                [0, 0],
-                [0, level_height - height],
-                [
-                    -*x + x_parent + width - interation_x_margin * 2,
-                    level_height - height,
-                ],
-                [
-                    -*x + x_parent + width - interation_x_margin * 2,
-                    *y_parent - y,
-                ],
-            ];
+
+            let connecting_arrow_points = get_connecting_arrow_points(
+                alignment_mode,
+                &x,
+                &y,
+                &x_parent,
+                &y_parent,
+                &height,
+                &width,
+                &interation_x_margin,
+                &scale,
+                level_height,
+                i);
             let connecting_arrow_id = format!("connecting_arrow_{}", generate_id());
             let connecting_arrow = Element::simple_arrow(
                 connecting_arrow_id.clone(),
-                x + interation_x_margin,
-                *y,
+                x + get_connecting_arrow_x(alignment_mode, interation_x_margin),
+                y + get_connecting_arrow_y(alignment_mode, interation_x_margin),
                 0,
                 y_margin,
                 locked,
@@ -409,6 +429,135 @@ fn main() {
             );
         }
         None => println!("{}", excalidraw_data),
+    }
+}
+
+fn get_connecting_arrow_x(alignment_mode: &str, interation_x_margin: i32) -> i32 {
+    if alignment_mode == "vertical" {
+        0
+    } else {
+        interation_x_margin
+    }
+}
+
+fn get_connecting_arrow_y(alignment_mode: &str, interation_x_margin: i32) -> i32 {
+    if alignment_mode == "vertical" {
+        interation_x_margin
+    } else {
+        0
+    }
+}
+
+fn get_connecting_arrow_points(
+    alignment_mode: &str,
+    x: &i32,
+    y: &i32,
+    x_parent: &i32,
+    y_parent: &i32,
+    height: &i32,
+    width: &i32,
+    interation_x_margin: &i32,
+    scale: &i32,
+    level_height: i32,
+    i: usize
+) -> Vec<[i32; 2]> {
+    if alignment_mode == "vertical" {
+        vec![
+            [0, 0],
+            [-1 * 2 * (i + 1) as i32 * scale, 0],
+            [
+                -1 * 2 * (i + 1) as i32 * scale,
+                // level_height
+                level_height + scale,
+            ],
+            [
+                -1,
+                // level_height
+                level_height + scale,
+            ],
+        ]
+    } else {
+        vec![
+            [0, 0],
+            [0, level_height - height],
+            [
+                -x + x_parent + width - interation_x_margin * 2,
+                level_height - height,
+            ],
+            [
+                -x + x_parent + width - interation_x_margin * 2,
+                y_parent - y,
+            ],
+        ]
+    }
+
+}
+
+fn get_x_alignment_factor(_alignment_mode: &str, x_alignment_factor: i32, container_width: i32) -> i32 {
+    x_alignment_factor * container_width
+}
+
+fn get_y_alignment_factor(alignment_mode: &str, y_alignment_factor: i32, scale: i32) -> i32 {
+    if alignment_mode == "vertical" {
+        y_alignment_factor * 2 * scale
+    } else {
+        y_alignment_factor * scale
+    }
+}
+
+fn get_container_port_text_x(alignment_mode: &str, width: &i32, i: usize) -> i32 {
+    if alignment_mode == "vertical" {
+        width + 20
+    } else {
+       20 + (i as i32 * 80)
+    }
+}
+
+fn get_container_port_text_y(alignment_mode: &str, height: &i32, i: usize) -> i32 {
+    if alignment_mode == "vertical" {
+       height / 2 + (i as i32 * 40) - 35
+    } else {
+        80
+    }
+}
+
+fn get_host_port_arrow_points(alignment_mode: &str, i: usize) -> Vec<[i32; 2]> {
+    if alignment_mode == "vertical" {
+        vec![[0, 0], [(i as i32 + 100), (i as i32 * 80) - 35]]
+    } else {
+        vec![[0, 0], [(i as i32 * 80) - 35, (i as i32 + 100)]]
+    }
+}
+
+fn get_host_port_arrow_x(alignment_mode: &str, width: &i32) -> i32 {
+    if alignment_mode == "vertical" {
+        width / 1
+    } else {
+        width / 2
+    }
+}
+
+fn get_host_port_arrow_y(alignment_mode: &str, height: &i32) -> i32 {
+    if alignment_mode == "vertical" {
+        height / 2
+    } else {
+        height / 1
+    }
+}
+
+fn get_container_y(alignment_mode: &str, scale: &i32, i: usize) -> i32 {
+    if alignment_mode == "vertical" {
+        i as i32 * 80 - 35
+    } else {
+        scale * 8
+    }
+}
+
+fn get_container_x(alignment_mode: &str, scale: &i32, i: usize) -> i32 {
+    if alignment_mode == "vertical" {
+        scale * 8 + 80
+    } else {
+        i as i32 * 80
     }
 }
 
