@@ -75,14 +75,16 @@ jobs:
 
       - name: Unzip the amd64 artifacts
         run: |
-          cp excalidocker-x86_64-linux/excalidocker docker/ci/amd64
+          mv excalidocker-x86_64-linux/excalidocker docker/ci/amd64
           cp excalidocker-config.yaml docker/ci/amd64
+          ls -la docker/ci/amd64
 
       - name: Unzip the arm64 artifacts
         id: unzip-arm64
         run: |
-          cp excalidocker-aarch64-linux/excalidocker docker/ci/arm64
+          mv excalidocker-aarch64-linux/excalidocker docker/ci/arm64
           cp excalidocker-config.yaml docker/ci/arm64
+          ls -la docker/ci/arm64
 
       - name: Build and push all
         uses: docker/build-push-action@v3
