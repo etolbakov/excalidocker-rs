@@ -5,4 +5,4 @@ COPY $TARGETARCH/excalidocker-config.yaml $TARGETARCH/excalidocker /excalidocker
 
 ENV PATH /excalidocker/bin/:$PATH
 
-CMD ["excalidocker"]
+CMD ["excalidocker" "--input-path ${INPUT_PATH}"]
