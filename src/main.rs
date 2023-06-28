@@ -184,15 +184,15 @@ fn main() {
     };
 
     let _networks = docker_compose_yaml.get("networks")
-        .map(|v| parse_networks(v))
+        .map(|v| DockerContainer::parse_networks(v))
         .flatten();
     // dbg!(networks);
 
     let mut identifier: i32 = 1;
     for (container_name_val, container_data_val) in services.as_mapping().unwrap() {
         let container_id = format!("container_{}", identifier);
-        let container_struct =
-            convert_to_container(container_id.clone(), container_data_val).unwrap();
+
+        let container_struct = DockerContainer::convert_to_container(container_id.clone(), container_data_val);    
         let container_name_str = container_name_val.as_str().unwrap();
 
         let mut dependency_component =
@@ -214,7 +214,7 @@ fn main() {
 
     for cn_name in containers_traversal_order {
         let container_width = width
-            + find_additional_width(cn_name.as_str().len(), &scale, &excalidraw_config.font.size);
+            + find_additional_width(cn_name.as_str(), &scale, &excalidraw_config.font.size);
         let container_struct = container_name_to_container_struct
             .get(cn_name.as_str())
             .unwrap();
@@ -583,7 +583,8 @@ fn find_containers_traversal_order(
 ///  20 | 1.5 letters in grid
 ///  28 | 1   letter in grid
 ///  36 | 1   letter in grid
-fn find_additional_width(container_name_len: usize, scale: &i32, font_size: &i32) -> i32 {
+fn find_additional_width(container_name: &str, scale: &i32, font_size: &i32) -> i32 {
+    let container_name_len = container_name.len();
     let (container_name_len_max, elements_per_item_grid) = match *font_size {
         FONT_SIZE_SMALL => (14, 3),
         FONT_SIZE_MEDIUM => (9, 2),
@@ -592,7 +593,7 @@ fn find_additional_width(container_name_len: usize, scale: &i32, font_size: &i32
         _ => (1, 1),
     };
     let text_accommodation_len_default = 5;
-    let text_accommodation_margin = 1;
+    let text_accommodation_margin = 3;
     if container_name_len > container_name_len_max {
         let required_space_for_text = ((container_name_len / elements_per_item_grid)
             - text_accommodation_len_default
@@ -616,117 +617,164 @@ struct DockerContainer {
     // TODO: add other fields
 }
 
-fn convert_to_container(id: String, value: &Value) -> Option<DockerContainer> {
-    let mapping = value.as_mapping()?;
-    let mut container = DockerContainer {
-        id,
-        image: String::new(),
-        command: None,
-        environment: None,
-        ports: None,
-        volumes: None,
-        depends_on: None,
-        networks: None,
-    };
+impl DockerContainer {
 
-    for (key, value) in mapping {
-        let key_str = key.as_str()?;
-        match key_str {
-            "image" => {
-                if let Value::String(image) = value {
-                    container.image = image.clone();
-                }
+    fn new(id: String) -> Self {
+        Self {
+            id,
+            image: String::new(),
+            command: None,
+            environment: None,
+            ports: None,
+            volumes: None,
+            depends_on: None,
+            networks: None,
+        }
+    }
+
+    fn parse_depends_on(value: &Value) -> Option<Vec<String>> {
+        match value {
+            Value::Sequence(depends_on) => {
+                let depends_on_vec: Vec<String> = depends_on
+                    .iter()
+                    .filter_map(|item| item.as_str().map(|s| s.to_string()))
+                    .collect();
+                Some(depends_on_vec)
             }
-            "command" => {
-                if let Value::String(command) = value {
-                    container.command = Some(command.clone());
-                }
+            Value::Mapping(depends_on) => {
+                let depends_on_vec: Vec<String> = depends_on
+                    .keys()
+                    .filter_map(|key| key.as_str().map(|s| s.to_string()))
+                    .collect();
+                Some(depends_on_vec)
             }
-            "environment" => {
-                if let Value::Mapping(environment) = value {
-                    let mut env_map = HashMap::new();
-                    for (env_key, env_value) in environment {
-                        if let (Value::String(key), Value::String(value)) = (env_key, env_value) {
-                            env_map.insert(key.clone(), value.clone());
-                        }
+            _ => None,
+        }
+    }
+
+    fn parse_networks(value: &Value) -> Option<Vec<String>> {
+        match value {        
+            Value::Sequence(networks) => {
+                let networks_strings: Vec<String> = networks
+                    .iter()
+                    .filter_map(|network| network.as_str().map(|nw| nw.to_string()))
+                    .collect();
+                Some(networks_strings)
+            }        
+            Value::Mapping(networks) => {
+                let networks_vec: Vec<String> = networks
+                    .keys()
+                    .filter_map(|key| key.as_str().map(|s| s.to_string()))
+                    .collect();
+                Some(networks_vec)
+            } 
+            _ => None
+        }
+    }
+
+    fn convert_to_container(id: String, value: &Value) -> Self {
+        let mapping = value.as_mapping().unwrap();
+        let mut container = DockerContainer::new(id);
+        for (key, value) in mapping {
+            let key_str = key.as_str().unwrap();
+            match key_str {
+                "image" => {
+                    if let Value::String(image) = value {
+                        container.image = image.clone();                       
                     }
-                    container.environment = Some(env_map);
                 }
-            }
-            "ports" => {
-                if let Value::Sequence(ports) = value {
-                    let port_strings = ports
-                        .iter()
-                        .filter_map(|port| port.as_str().map(|p| p.to_string()))
-                        .collect();
-                    container.ports = Some(port_strings);
+                "command" => {
+                    if let Value::String(command) = value {
+                        container.command = Some(command.clone());
+                    }
                 }
-            }
-            "volumes" => {
-                if let Value::Sequence(volumes) = value {
-                    let volume_strings = volumes
-                        .iter()
-                        .filter_map(|volume| volume.as_str().map(|v| v.to_string()))
-                        .collect();
-                    container.volumes = Some(volume_strings);
+                "environment" => {
+                    if let Value::Mapping(environment) = value {
+                        let mut env_map = HashMap::new();
+                        for (env_key, env_value) in environment {
+                            if let (Value::String(key), Value::String(value)) = (env_key, env_value) {
+                                env_map.insert(key.clone(), value.clone());
+                            }
+                        }
+                        container.environment = Some(env_map);
+                    }
                 }
-            }
-            "depends_on" => {
-                if let Some(depends_on) = parse_depends_on(value.clone()) {
-                    container.depends_on = Some(depends_on);
+                "ports" => {
+                    if let Value::Sequence(ports) = value {
+                        let port_strings = ports
+                            .iter()
+                            .filter_map(|port| port.as_str().map(|p| p.to_string()))
+                            .collect();
+                        container.ports = Some(port_strings);
+                    }
                 }
-            }
-            "networks" => {
-                if let Some(networks) = parse_networks(value) {
-                    container.networks = Some(networks);
+                "volumes" => {
+                    if let Value::Sequence(volumes) = value {
+                        let volume_strings = volumes
+                            .iter()
+                            .filter_map(|volume| volume.as_str().map(|v| v.to_string()))
+                            .collect();
+                        container.volumes = Some(volume_strings);
+                    }
                 }
+                "depends_on" => {
+                    if let Some(depends_on) = Self::parse_depends_on(value) {
+                        container.depends_on = Some(depends_on);
+                    }
+                }
+                "networks" => {
+                    if let Some(networks) =  Self::parse_networks(value) {
+                        container.networks = Some(networks);
+                    }
+                }
+                // TODO: Handle other fields
+                _ => (),
             }
-            // TODO: Handle other fields
-            _ => (),
         }
-    }
-    Some(container)
-}
-
-fn parse_depends_on(value: Value) -> Option<Vec<String>> {
-    match value {
-        Value::Sequence(depends_on) => {
-            let depends_on_vec: Vec<String> = depends_on
-                .iter()
-                .filter_map(|item| item.as_str().map(|s| s.to_string()))
-                .collect();
-            Some(depends_on_vec)
-        }
-        Value::Mapping(depends_on) => {
-            let depends_on_vec: Vec<String> = depends_on
-                .keys()
-                .filter_map(|key| key.as_str().map(|s| s.to_string()))
-                .collect();
-            Some(depends_on_vec)
-        }
-        _ => None,
+        container
     }
 }
 
-fn parse_networks(value: &Value) -> Option<Vec<String>> {
-    match value {        
-        Value::Sequence(networks) => {
-            let networks_strings: Vec<String> = networks
-                .iter()
-                .filter_map(|network| network.as_str().map(|nw| nw.to_string()))
-                .collect();
-            Some(networks_strings)
-        }        
-        Value::Mapping(networks) => {
-            let networks_vec: Vec<String> = networks
-                .keys()
-                .filter_map(|key| key.as_str().map(|s| s.to_string()))
-                .collect();
-            Some(networks_vec)
-        } 
-        _ => None
-    }
-}
+
+// fn parse_depends_on(value: Value) -> Option<Vec<String>> {
+//     match value {
+//         Value::Sequence(depends_on) => {
+//             let depends_on_vec: Vec<String> = depends_on
+//                 .iter()
+//                 .filter_map(|item| item.as_str().map(|s| s.to_string()))
+//                 .collect();
+//             Some(depends_on_vec)
+//         }
+//         Value::Mapping(depends_on) => {
+//             let depends_on_vec: Vec<String> = depends_on
+//                 .keys()
+//                 .filter_map(|key| key.as_str().map(|s| s.to_string()))
+//                 .collect();
+//             Some(depends_on_vec)
+//         }
+//         _ => None,
+//     }
+// }
+
+// fn parse_networks(value: &Value) -> Option<Vec<String>> {
+//     match value {        
+//         Value::Sequence(networks) => {
+//             let networks_strings: Vec<String> = networks
+//                 .iter()
+//                 .filter_map(|network| network.as_str().map(|nw| nw.to_string()))
+//                 .collect();
+//             Some(networks_strings)
+//         }        
+//         Value::Mapping(networks) => {
+//             let networks_vec: Vec<String> = networks
+//                 .keys()
+//                 .filter_map(|key| key.as_str().map(|s| s.to_string()))
+//                 .collect();
+//             Some(networks_vec)
+//         } 
+//         _ => None
+//     }
+// }
 
 fn generate_id() -> String {
     rand::thread_rng()
