@@ -40,7 +40,6 @@ jobs:
             mkdir -p docker/ci/amd64/ &&
             mv target/x86_64-unknown-linux-musl/release/excalidocker docker/ci/amd64/
             ls -lah
-            ls -lah excalidocker-x86_64-linux
             ls -lah target
             ls -lah docker/ci/amd64/
           
@@ -53,7 +52,6 @@ jobs:
           mkdir -p docker/ci/arm64/ &&
           mv target/aarch64-unknown-linux-musl/release/excalidocker docker/ci/arm64/
           ls -lah
-          ls -lah excalidocker-aarch64-linux
           ls -lah target
           ls -lah docker/ci/arm64/
 
