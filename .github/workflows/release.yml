@@ -37,22 +37,25 @@ jobs:
           cargo clean && cross build --target=x86_64-unknown-linux-musl --release
       - name: Package x86_64-unknown-linux-musl
         run: |            
-            mkdir -p excalidocker-x86_64-linux &&
-            mv target/x86_64-unknown-linux-musl/release/excalidocker excalidocker-x86_64-linux
+            mkdir -p docker/ci/amd64/ &&
+            mv target/x86_64-unknown-linux-musl/release/excalidocker docker/ci/amd64/
             ls -lah
             ls -lah excalidocker-x86_64-linux
             ls -lah target
+            ls -lah docker/ci/amd64/
+          
       - name: Build aarch64-unknown-linux-musl
         run: |
           cargo clean && cross build --target=aarch64-unknown-linux-musl --release
           
       - name: Package aarch64-unknown-linux-musl
         run: |
-          mkdir -p excalidocker-aarch64-linux &&
-          mv target/aarch64-unknown-linux-musl/release/excalidocker excalidocker-aarch64-linux
+          mkdir -p docker/ci/arm64/ &&
+          mv target/aarch64-unknown-linux-musl/release/excalidocker docker/ci/arm64/
           ls -lah
           ls -lah excalidocker-aarch64-linux
           ls -lah target
+          ls -lah docker/ci/arm64/
 
       - name: Login to Dockerhub
         uses: docker/login-action@v2
@@ -75,16 +78,12 @@ jobs:
 
       - name: Unzip the amd64 artifacts
         run: |
-          mkdir -r docker/ci/amd64/
-          mv excalidocker-x86_64-linux/excalidocker docker/ci/amd64/
           cp excalidocker-config.yaml docker/ci/amd64/
           ls -la docker/ci/amd64
 
       - name: Unzip the arm64 artifacts
         id: unzip-arm64
         run: |
-          mkdir -r docker/ci/arm64
-          mv excalidocker-aarch64-linux/excalidocker docker/ci/arm64/
           cp excalidocker-config.yaml docker/ci/arm64/
           ls -la docker/ci/arm64
 
