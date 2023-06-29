@@ -94,3 +94,10 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: |
             etolbakov/excalidocker:${{ env.IMAGE_TAG }}
+
+      - name: validation
+        run: |
+          echo "valdation 1"
+          docker run --rm --pull always etolbakov/excalidocker:0.1.7-prerelease-20230629
+          echo "valdation 1"
+          docker run --rm --pull always -e INPUT_PATH=https://github.com/apache/pinot/blob/master/docker/images/pinot/docker-compose.yml etolbakov/excalidocker:0.1.7-prerelease-20230629 
