@@ -77,7 +77,7 @@ jobs:
       - name: Unzip the amd64 artifacts
         run: |
           cp excalidocker-config.yaml docker/ci/amd64/
-          chmod + entrypoint.sh
+          chmod +x entrypoint.sh
           cp entrypoint.sh docker/ci/amd64/
           ls -la docker/ci/amd64
 
@@ -85,7 +85,7 @@ jobs:
         id: unzip-arm64
         run: |
           cp excalidocker-config.yaml docker/ci/arm64/
-          chmod + entrypoint.sh
+          chmod +x entrypoint.sh
           cp entrypoint.sh docker/ci/arm64/
           ls -la docker/ci/arm64
 
