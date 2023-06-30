@@ -77,16 +77,16 @@ jobs:
       - name: Unzip the amd64 artifacts
         run: |
           cp excalidocker-config.yaml docker/ci/amd64/
-          chmod 777 entrypoint.sh
-          cp entrypoint.sh docker/ci/amd64/
+          chmod 777 docker/ci/entrypoint.sh
+          cp docker/ci/entrypoint.sh docker/ci/amd64/
           ls -la docker/ci/amd64
 
       - name: Unzip the arm64 artifacts
         id: unzip-arm64
         run: |
           cp excalidocker-config.yaml docker/ci/arm64/
-          chmod 777 entrypoint.sh
-          cp entrypoint.sh docker/ci/arm64/
+          chmod 777 docker/ci/entrypoint.sh
+          cp docker/ci/entrypoint.sh docker/ci/arm64/
           ls -la docker/ci/arm64
 
       - name: Build and push all
