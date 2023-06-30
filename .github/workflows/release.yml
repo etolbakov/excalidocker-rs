@@ -77,7 +77,7 @@ jobs:
       - name: Unzip the amd64 artifacts
         run: |
           cp excalidocker-config.yaml docker/ci/amd64/
-          chmod +x entrypoint.sh
+          chmod 777 entrypoint.sh
           cp entrypoint.sh docker/ci/amd64/
           ls -la docker/ci/amd64
 
@@ -85,7 +85,7 @@ jobs:
         id: unzip-arm64
         run: |
           cp excalidocker-config.yaml docker/ci/arm64/
-          chmod +x entrypoint.sh
+          chmod 777 entrypoint.sh
           cp entrypoint.sh docker/ci/arm64/
           ls -la docker/ci/arm64
 
@@ -99,7 +99,17 @@ jobs:
           tags: |
             etolbakov/excalidocker:${{ env.IMAGE_TAG }}
 
-      - name: validation
+      - name: validation1
+        run: |          
+          echo "valdation 1"
+          docker run --rm --pull always -e INPUT_PATH=https://github.com/apache/pinot/blob/master/docker/images/pinot/docker-compose.yml etolbakov/excalidocker:0.1.7-prerelease-20230630 
+
+      - name: validation2
         run: |          
           echo "valdation 2"
-          docker run --rm --pull always -e INPUT_PATH=https://github.com/apache/pinot/blob/master/docker/images/pinot/docker-compose.yml etolbakov/excalidocker:0.1.7-prerelease-20230630 
+          docker run --rm --pull always -e SHOW_CONFIG=true etolbakov/excalidocker:0.1.7-prerelease-20230630
+
+      - name: validation3
+        run: |          
+          echo "valdation 3"
+          docker run --rm --pull always etolbakov/excalidocker:0.1.7-prerelease-20230630 
