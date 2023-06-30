@@ -8,4 +8,4 @@ RUN chmod +x /excalidocker/bin/entrypoint.sh
 
 ENV PATH /excalidocker/bin/:$PATH
 
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["./excalidocker/bin/entrypoint.sh"]
