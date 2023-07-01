@@ -1,4 +1,5 @@
 FROM alpine:3.18.2
+MAINTAINER Evgeny Tolbakov <ev.tolbakov@gmail.com>
 
 ARG TARGETARCH
 
