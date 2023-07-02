@@ -27,8 +27,8 @@ use crate::exporters::excalidraw::elements;
 #[command(version = "0.1.7")]
 #[command(about = "Utility to convert docker-compose into excalidraw", long_about = None)]
 #[command(override_usage("
-╰→ excalidocker [OPTIONS] --input-path <INPUT_PATH>
-╰→ excalidocker [OPTIONS] --show-config"))]
+╰→ excalidocker --input-path <INPUT_PATH>
+╰→ excalidocker --show-config"))]
 struct Cli {
     /// show configuration file
     #[arg(short='C', long, default_value_t = false)]
@@ -239,7 +239,7 @@ fn main() {
         let ports = container_struct.clone().ports.unwrap_or(Vec::new());
         for (i, port) in ports.iter().enumerate() {
             let i = i as i32;
-            let (container_adjustment_x,container_adjustment_y) = get_container_xy(alignment_mode, &scale, i);
+            let (container_adjustment_x,container_adjustment_y) = get_container_xy(alignment_mode, &container_width, &scale, i);
             let container_x = x + container_adjustment_x;
             let container_y = y + container_adjustment_y;
 
@@ -271,7 +271,7 @@ fn main() {
                 locked,
             );
 
-            let (host_port_arrow_x, host_port_arrow_y) = get_host_port_arrow_xy(alignment_mode, &height, &width);
+            let (host_port_arrow_x, host_port_arrow_y) = get_host_port_arrow_xy(alignment_mode, &height, &container_width);
             let host_port_arrow = Element::simple_arrow(
                 host_port_arrow_id.clone(),
                 x + host_port_arrow_x,
@@ -527,9 +527,9 @@ fn get_host_port_arrow_xy(alignment_mode: &str, height: &i32, width: &i32) -> (i
     }
 }
 
-fn get_container_xy(alignment_mode: &str, scale: &i32, i: i32) -> (i32, i32) {
+fn get_container_xy(alignment_mode: &str, width: &i32, scale: &i32, i: i32) -> (i32, i32) {
     if alignment_mode == "vertical" {
-        (scale * 8 + 80, i * 80 - 35)
+        (*width + scale * 5, i * 80 - 35)
     } else {
         (i * 80, scale * 8)
     }
