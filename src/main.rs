@@ -273,7 +273,7 @@ fn main() {
             );
 
             let (host_port_arrow_x, host_port_arrow_y) =
-                get_host_port_arrow_xy(alignment_mode, &height, &container_width);
+                get_host_port_arrow_xy(alignment_mode, &height, &width, &container_width);
             let host_port_arrow = Element::simple_arrow(
                 host_port_arrow_id.clone(),
                 x + host_port_arrow_x,
@@ -535,9 +535,9 @@ fn get_host_port_arrow_points(alignment_mode: &str, i: i32) -> Vec<[i32; 2]> {
     }
 }
 
-fn get_host_port_arrow_xy(alignment_mode: &str, height: &i32, width: &i32) -> (i32, i32) {
+fn get_host_port_arrow_xy(alignment_mode: &str, height: &i32, width: &i32, container_width: &i32) -> (i32, i32) {
     if alignment_mode == "vertical" {
-        (*width, height / 2)
+        (*container_width, height / 2)
     } else {
         (width / 2, *height)
     }
