@@ -1,8 +1,8 @@
-use serde::{Deserialize, Serialize};
 use crate::exporters::excalidraw_config::consts::{
-    NO_X_ALIGNMENT_FACTOR, NO_X_MARGIN, NO_Y_ALIGNMENT_FACTOR, X_MARGIN,
-    NO_Y_MARGIN, X_ALIGNMENT_FACTOR, Y_ALIGNMENT_FACTOR, Y_MARGIN
+    NO_X_ALIGNMENT_FACTOR, NO_X_MARGIN, NO_Y_ALIGNMENT_FACTOR, NO_Y_MARGIN, X_ALIGNMENT_FACTOR,
+    X_MARGIN, Y_ALIGNMENT_FACTOR, Y_MARGIN,
 };
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ExcalidrawConfig {
@@ -93,10 +93,10 @@ pub mod consts {
     pub const NO_Y_MARGIN: i32 = 0;
     pub const X_MARGIN: i32 = 60;
     pub const Y_MARGIN: i32 = 60;
-    pub const X_ALIGNMENT_FACTOR :i32  = 1;
-    pub const NO_X_ALIGNMENT_FACTOR :i32  = 0;
-    pub const Y_ALIGNMENT_FACTOR :i32  = 1;
-    pub const NO_Y_ALIGNMENT_FACTOR :i32  = 0;
+    pub const X_ALIGNMENT_FACTOR: i32 = 1;
+    pub const NO_X_ALIGNMENT_FACTOR: i32 = 0;
+    pub const Y_ALIGNMENT_FACTOR: i32 = 1;
+    pub const NO_Y_ALIGNMENT_FACTOR: i32 = 0;
 }
 
 /// Based on the previous implementation it was observed
@@ -107,10 +107,25 @@ pub mod consts {
 /// and for 'vertical' alignment
 /// x += x_margin;
 /// y += y_margin + scale;
-pub fn margins(alignment_mode: &str)-> (i32, i32, i32, i32) {
+pub fn margins(alignment_mode: &str) -> (i32, i32, i32, i32) {
     match alignment_mode {
-        "horizontal" => (X_MARGIN, NO_Y_MARGIN, X_ALIGNMENT_FACTOR, NO_Y_ALIGNMENT_FACTOR),
-        "vertical" => (NO_X_MARGIN, Y_MARGIN, NO_X_ALIGNMENT_FACTOR, Y_ALIGNMENT_FACTOR),
-        _ => (X_MARGIN, Y_MARGIN, X_ALIGNMENT_FACTOR, NO_Y_ALIGNMENT_FACTOR), // "stepped" is default
+        "horizontal" => (
+            X_MARGIN,
+            NO_Y_MARGIN,
+            X_ALIGNMENT_FACTOR,
+            NO_Y_ALIGNMENT_FACTOR,
+        ),
+        "vertical" => (
+            NO_X_MARGIN,
+            Y_MARGIN,
+            NO_X_ALIGNMENT_FACTOR,
+            Y_ALIGNMENT_FACTOR,
+        ),
+        _ => (
+            X_MARGIN,
+            Y_MARGIN,
+            X_ALIGNMENT_FACTOR,
+            NO_Y_ALIGNMENT_FACTOR,
+        ), // "stepped" is default
     }
-} 
+}

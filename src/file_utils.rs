@@ -1,14 +1,14 @@
-use std::{fs::File, process::exit};
 use std::io::Read;
+use std::{fs::File, process::exit};
 
 use isahc::ReadResponseExt;
 
 use serde_yaml::{Mapping, Value};
 
-use crate::{error::ExcalidockerError::{
-    self, FileIncorrectExtension, FileNotFound, RemoteFileFailedRead,
-}, exporters::excalidraw_config::ExcalidrawConfig};
-
+use crate::{
+    error::ExcalidockerError::{self, FileIncorrectExtension, FileNotFound, RemoteFileFailedRead},
+    exporters::excalidraw_config::ExcalidrawConfig,
+};
 
 pub fn get_excalidraw_config(file_path: &str) -> ExcalidrawConfig {
     let excalidocker_config_contents = match read_yaml_file(file_path) {
@@ -19,15 +19,15 @@ pub fn get_excalidraw_config(file_path: &str) -> ExcalidrawConfig {
         }
     };
     return match serde_yaml::from_str(&excalidocker_config_contents) {
-            Ok(cfg) => cfg,
-            Err(err) => {
-                println!("Configuration parsing issue: {}", err);
-                exit(1);
-            }
+        Ok(cfg) => cfg,
+        Err(err) => {
+            println!("Configuration parsing issue: {}", err);
+            exit(1);
         }
+    };
 }
 
-pub fn get_docker_compose_content(file_path: &str) ->  Mapping {
+pub fn get_docker_compose_content(file_path: &str) -> Mapping {
     let file_content = match get_file_content(file_path) {
         Ok(content) => content,
         Err(err) => {
@@ -76,7 +76,7 @@ fn read_yaml_file(file_path: &str) -> Result<String, ExcalidockerError> {
     }
 }
 
-/// Get file content as a String. 
+/// Get file content as a String.
 /// Both remote (f.e. from Github) and local files are supported
 fn get_file_content(file_path: &str) -> Result<String, ExcalidockerError> {
     if file_path.starts_with("http") {

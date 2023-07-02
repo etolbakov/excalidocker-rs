@@ -6,8 +6,8 @@ use clap::{arg, command, Parser};
 use exporters::excalidraw::elements::{
     FONT_SIZE_EXTRA_LARGE, FONT_SIZE_LARGE, FONT_SIZE_MEDIUM, FONT_SIZE_SMALL,
 };
-use exporters::excalidraw_config::{ExcalidrawConfig, margins};
 use exporters::excalidraw_config::{arrow_bounded_element, binding, BoundElement};
+use exporters::excalidraw_config::{margins, ExcalidrawConfig};
 use rand::{distributions::Alphanumeric, Rng};
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -26,15 +26,17 @@ use crate::exporters::excalidraw::elements;
 #[command(author = "Evgeny Tolbakov <ev.tolbakov@gmail.com>")]
 #[command(version = "0.1.7")]
 #[command(about = "Utility to convert docker-compose into excalidraw", long_about = None)]
-#[command(override_usage("
+#[command(override_usage(
+    "
 ╰→ excalidocker --input-path <INPUT_PATH>
-╰→ excalidocker --show-config"))]
+╰→ excalidocker --show-config"
+))]
 struct Cli {
     /// show configuration file
-    #[arg(short='C', long, default_value_t = false)]
+    #[arg(short = 'C', long, default_value_t = false)]
     show_config: bool,
     /// file path to the docker-compose.yaml
-    #[arg(short, long, required_unless_present ="show_config")]
+    #[arg(short, long, required_unless_present = "show_config")]
     input_path: Option<String>,
     /// display connecting lines between services; if `true` then only service without the lines are rendered
     #[arg(short, long, default_value_t = false)]
@@ -136,7 +138,8 @@ struct RectangleStruct {
 
 fn main() {
     let cli = Cli::parse();
-    let excalidraw_config: ExcalidrawConfig = file_utils::get_excalidraw_config(cli.config_path.as_str());
+    let excalidraw_config: ExcalidrawConfig =
+        file_utils::get_excalidraw_config(cli.config_path.as_str());
     if cli.show_config {
         println!("{}", serde_yaml::to_string(&excalidraw_config).unwrap());
         return;
@@ -162,12 +165,7 @@ fn main() {
     let docker_compose_yaml = file_utils::get_docker_compose_content(input_filepath);
 
     let alignment_mode = excalidraw_config.alignment.mode.as_str();
-    let (
-        x_margin,
-        y_margin,
-        x_alignment_factor,
-        y_alignment_factor,
-    ) =  margins(alignment_mode);
+    let (x_margin, y_margin, x_alignment_factor, y_alignment_factor) = margins(alignment_mode);
 
     let services = match docker_compose_yaml.get("services") {
         Some(services) => services,
@@ -183,7 +181,8 @@ fn main() {
         }
     };
 
-    let _networks = docker_compose_yaml.get("networks")
+    let _networks = docker_compose_yaml
+        .get("networks")
         .map(|v| DockerContainer::parse_networks(v))
         .flatten();
     // dbg!(networks);
@@ -192,7 +191,8 @@ fn main() {
     for (container_name_val, container_data_val) in services.as_mapping().unwrap() {
         let container_id = format!("container_{}", identifier);
 
-        let container_struct = DockerContainer::convert_to_container(container_id.clone(), container_data_val);    
+        let container_struct =
+            DockerContainer::convert_to_container(container_id.clone(), container_data_val);
         let container_name_str = container_name_val.as_str().unwrap();
 
         let mut dependency_component =
@@ -213,8 +213,8 @@ fn main() {
     let containers_traversal_order = find_containers_traversal_order(container_name_to_parents);
 
     for cn_name in containers_traversal_order {
-        let container_width = width
-            + find_additional_width(cn_name.as_str(), &scale, &excalidraw_config.font.size);
+        let container_width =
+            width + find_additional_width(cn_name.as_str(), &scale, &excalidraw_config.font.size);
         let container_struct = container_name_to_container_struct
             .get(cn_name.as_str())
             .unwrap();
@@ -239,7 +239,8 @@ fn main() {
         let ports = container_struct.clone().ports.unwrap_or(Vec::new());
         for (i, port) in ports.iter().enumerate() {
             let i = i as i32;
-            let (container_adjustment_x,container_adjustment_y) = get_container_xy(alignment_mode, &container_width, &scale, i);
+            let (container_adjustment_x, container_adjustment_y) =
+                get_container_xy(alignment_mode, &container_width, &scale, i);
             let container_x = x + container_adjustment_x;
             let container_y = y + container_adjustment_y;
 
@@ -271,7 +272,8 @@ fn main() {
                 locked,
             );
 
-            let (host_port_arrow_x, host_port_arrow_y) = get_host_port_arrow_xy(alignment_mode, &height, &container_width);
+            let (host_port_arrow_x, host_port_arrow_y) =
+                get_host_port_arrow_xy(alignment_mode, &height, &container_width);
             let host_port_arrow = Element::simple_arrow(
                 host_port_arrow_id.clone(),
                 x + host_port_arrow_x,
@@ -292,7 +294,8 @@ fn main() {
                 .push(arrow_bounded_element(host_port_arrow_id.to_string()));
 
             if host_port_str != container_port_str {
-                let (container_port_text_x, container_port_text_y) = get_container_port_text_xy(alignment_mode, &height, &width, i);
+                let (container_port_text_x, container_port_text_y) =
+                    get_container_port_text_xy(alignment_mode, &height, &width, i);
                 let container_port_text = Element::draw_small_monospaced_text(
                     container_port_str,
                     x + container_port_text_x,
@@ -310,7 +313,13 @@ fn main() {
         }
 
         // ------------ Define Alignment ------------
-        let (x_alignment, y_alignment) = get_alignment_factor_xy(alignment_mode, x_alignment_factor,y_alignment_factor, container_width, scale);
+        let (x_alignment, y_alignment) = get_alignment_factor_xy(
+            alignment_mode,
+            x_alignment_factor,
+            y_alignment_factor,
+            container_width,
+            scale,
+        );
         x += x_margin + x_alignment;
         y += y_margin + y_alignment;
 
@@ -358,9 +367,11 @@ fn main() {
                 &interation_x_margin,
                 &scale,
                 level_height,
-                i);
+                i,
+            );
             let connecting_arrow_id = format!("connecting_arrow_{}", generate_id());
-            let (connecting_arrow_x, connecting_arrow_y) = get_connecting_arrow_xy(alignment_mode, interation_x_margin);
+            let (connecting_arrow_x, connecting_arrow_y) =
+                get_connecting_arrow_xy(alignment_mode, interation_x_margin);
             let connecting_arrow = Element::simple_arrow(
                 connecting_arrow_id.clone(),
                 x + connecting_arrow_x,
@@ -371,7 +382,7 @@ fn main() {
                 elements::CONNECTION_STYLE.into(),
                 excalidraw_config.connections.edge.clone(),
                 connecting_arrow_points,
-                binding(id.to_string()),              // child container
+                binding(id.to_string()),                // child container
                 binding(parent_temp_struct.id.clone()), // parent container
             );
 
@@ -436,7 +447,7 @@ fn main() {
 
 fn get_connecting_arrow_xy(alignment_mode: &str, interation_margin: i32) -> (i32, i32) {
     if alignment_mode == "vertical" {
-        (0, interation_margin)
+        (0, interation_margin / 2)
     } else {
         (interation_margin, 0)
     }
@@ -453,7 +464,7 @@ fn get_connecting_arrow_points(
     interation_x_margin: &i32,
     scale: &i32,
     level_height: i32,
-    i: i32
+    i: i32,
 ) -> Vec<[i32; 2]> {
     if alignment_mode == "vertical" {
         vec![
@@ -484,26 +495,31 @@ fn get_connecting_arrow_points(
             ],
         ]
     }
-
 }
 
 fn get_alignment_factor_xy(
-    alignment_mode: &str, 
-    x_alignment_factor: i32, 
+    alignment_mode: &str,
+    x_alignment_factor: i32,
     y_alignment_factor: i32,
-    container_width: i32, 
-    scale: i32) -> (i32, i32) {
-   (
+    container_width: i32,
+    scale: i32,
+) -> (i32, i32) {
+    (
         x_alignment_factor * container_width,
         if alignment_mode == "vertical" {
             y_alignment_factor * 2 * scale // TODO should we increase the step or make it configurable??
         } else {
             y_alignment_factor * scale
-        }
+        },
     )
 }
 
-fn get_container_port_text_xy(alignment_mode: &str, height: &i32, width: &i32, i: i32) -> (i32, i32) {
+fn get_container_port_text_xy(
+    alignment_mode: &str,
+    height: &i32,
+    width: &i32,
+    i: i32,
+) -> (i32, i32) {
     if alignment_mode == "vertical" {
         (width + 20, height / 2 + (i * 40) - 35)
     } else {
@@ -519,7 +535,7 @@ fn get_host_port_arrow_points(alignment_mode: &str, i: i32) -> Vec<[i32; 2]> {
     }
 }
 
-fn get_host_port_arrow_xy(alignment_mode: &str, height: &i32, width: &i32) -> (i32,i32) {
+fn get_host_port_arrow_xy(alignment_mode: &str, height: &i32, width: &i32) -> (i32, i32) {
     if alignment_mode == "vertical" {
         (*width, height / 2)
     } else {
@@ -618,7 +634,6 @@ struct DockerContainer {
 }
 
 impl DockerContainer {
-
     fn new(id: String) -> Self {
         Self {
             id,
@@ -653,22 +668,22 @@ impl DockerContainer {
     }
 
     fn parse_networks(value: &Value) -> Option<Vec<String>> {
-        match value {        
+        match value {
             Value::Sequence(networks) => {
                 let networks_strings: Vec<String> = networks
                     .iter()
                     .filter_map(|network| network.as_str().map(|nw| nw.to_string()))
                     .collect();
                 Some(networks_strings)
-            }        
+            }
             Value::Mapping(networks) => {
                 let networks_vec: Vec<String> = networks
                     .keys()
                     .filter_map(|key| key.as_str().map(|s| s.to_string()))
                     .collect();
                 Some(networks_vec)
-            } 
-            _ => None
+            }
+            _ => None,
         }
     }
 
@@ -680,7 +695,7 @@ impl DockerContainer {
             match key_str {
                 "image" => {
                     if let Value::String(image) = value {
-                        container.image = image.clone();                       
+                        container.image = image.clone();
                     }
                 }
                 "command" => {
@@ -692,7 +707,8 @@ impl DockerContainer {
                     if let Value::Mapping(environment) = value {
                         let mut env_map = HashMap::new();
                         for (env_key, env_value) in environment {
-                            if let (Value::String(key), Value::String(value)) = (env_key, env_value) {
+                            if let (Value::String(key), Value::String(value)) = (env_key, env_value)
+                            {
                                 env_map.insert(key.clone(), value.clone());
                             }
                         }
@@ -723,7 +739,7 @@ impl DockerContainer {
                     }
                 }
                 "networks" => {
-                    if let Some(networks) =  Self::parse_networks(value) {
+                    if let Some(networks) = Self::parse_networks(value) {
                         container.networks = Some(networks);
                     }
                 }
@@ -734,7 +750,6 @@ impl DockerContainer {
         container
     }
 }
-
 
 // fn parse_depends_on(value: Value) -> Option<Vec<String>> {
 //     match value {
@@ -757,21 +772,21 @@ impl DockerContainer {
 // }
 
 // fn parse_networks(value: &Value) -> Option<Vec<String>> {
-//     match value {        
+//     match value {
 //         Value::Sequence(networks) => {
 //             let networks_strings: Vec<String> = networks
 //                 .iter()
 //                 .filter_map(|network| network.as_str().map(|nw| nw.to_string()))
 //                 .collect();
 //             Some(networks_strings)
-//         }        
+//         }
 //         Value::Mapping(networks) => {
 //             let networks_vec: Vec<String> = networks
 //                 .keys()
 //                 .filter_map(|key| key.as_str().map(|s| s.to_string()))
 //                 .collect();
 //             Some(networks_vec)
-//         } 
+//         }
 //         _ => None
 //     }
 // }
@@ -788,7 +803,6 @@ fn generate_id() -> String {
 // fn check_parsing() {
 //
 // }
-
 
 #[test]
 fn test_check_port_parsing() {

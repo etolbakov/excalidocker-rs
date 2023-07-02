@@ -2,7 +2,7 @@ use serde::Serialize;
 use serde_json::{Map, Value};
 
 use super::excalidraw_config::{BoundElement, Roundness};
-use crate::exporters::excalidraw_config::{Binding, roundness};
+use crate::exporters::excalidraw_config::{roundness, Binding};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
