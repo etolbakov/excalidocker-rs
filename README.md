@@ -109,7 +109,7 @@ The output should be similar to:
 Utility to convert docker-compose into excalidraw
 
 Usage: 
-Excalidocker 0.1.7
+excalidocker 0.1.7
     ╰→ excalidocker --input-path <INPUT_PATH>
     ╰→ excalidocker --show-config
 
