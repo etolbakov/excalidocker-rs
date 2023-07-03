@@ -138,14 +138,14 @@ At the moment it's possible to customize:
  - alignment mode (`stepped`(default), `vertical`, `horizontal`)
  - font size and type
  - fill type (`hachure`, `cross-hatch`, `solid`) 
- - backgroud colours for services and ports
+ - background colours for services and ports
  - edge type (`sharp`, `round`)
  - enable/disable connections (has the same effect as `--skip-dependencies` cli option)
 
 ### Demo
 🎥 This is a small demo to see the `excalidocker` in action
 
-![excalidocker-demo](./data/img/excalidocker.gif)
+![excalidocker-demo](./data/img/excalidocker017.gif)
 
 ## Installation
 To build `excalidocker` locally, please follow these steps:
