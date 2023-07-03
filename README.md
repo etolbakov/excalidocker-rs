@@ -38,10 +38,10 @@ An idea of writing this utility originates from Robin Moffatt's [tweet](https://
 ## Usage
 ### Docker image
 🐳 `excalidocker` is available as a [Docker image](https://hub.docker.com/r/etolbakov/excalidocker/tags).
-Convert docker-compose files without hassle. Use as a Github action for documentation, presentations, ADRs what have you.
+Convert docker-compose files without hassle. Use as a Github action step for documentation, presentations, ADRs what have you.
 The sky is the limit. 
 
-Convert a local file:
+Convert a _local_ file:
 
  ```sh
 docker run --rm --pull always \
@@ -51,7 +51,7 @@ docker run --rm --pull always \
            > produced-by-image.excalidraw
 ```
 
-Convert an external file:
+Convert an _external_ file:
 
 ```sh
 docker run --rm --pull always \
@@ -78,7 +78,7 @@ The produced `excalidraw` file can be opened in [excalidraw](https://excalidraw.
   ```
 </details>
 
-More command examples are in the [Makefile](/Makefile).
+More command examples could be found either in the [Makefile](/Makefile) or in the [examples](./data/examples.md).
 ### Brew
 To install `excalidocker` with `brew` run the following command: 
 ```
@@ -101,8 +101,8 @@ The output should be similar to:
 Utility to convert docker-compose into excalidraw
 
 Usage: 
-╰→ excalidocker [OPTIONS] --input-path <INPUT_PATH>
-╰→ excalidocker [OPTIONS] --show-config
+╰→ excalidocker --input-path <INPUT_PATH>
+╰→ excalidocker --show-config
 
 Options:
   -C, --show-config                show configuration file
