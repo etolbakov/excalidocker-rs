@@ -87,10 +87,13 @@ docker run --rm --pull always \
 
 ## Artifact
 > **Warning**
->  The `excalidocker` config precedence: 
->  the highest priority takes command line argument `--config-path` 
->  otherwise `excalidocker` expects the `excalidocker-config.yaml` to be placed near the executable (as per the `DEFAULT_CONFIG_PATH` constant in [excalidraw_config.rs](./provide_link))
->  otherwise `excalidocker` uses the default configuration (as per the `DEFAULT_CONFIG` constant in [excalidraw_config.rs](./provide_link))
+>  The `excalidocker` config precedence:
+> 
+>   - the highest priority takes command line argument `--config-path`
+> 
+>   - otherwise `excalidocker` expects the `excalidocker-config.yaml` to be placed near the executable (as per the `DEFAULT_CONFIG_PATH` constant in [excalidraw_config.rs](./provide_link))
+> 
+>   - otherwise `excalidocker` uses the default configuration (as per the `DEFAULT_CONFIG` constant in [excalidraw_config.rs](./provide_link))
 
 1. Convert a local file.
 Specify the path to the `docker-compose.yaml` as a `--input-path` command line argument.
