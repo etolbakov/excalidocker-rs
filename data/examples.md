@@ -20,7 +20,7 @@ docker run --rm  etolbakov/excalidocker:latest
 ```
  - for artifacts
 ```sh
-./excalidocker
+excalidocker
 ```
 
 ## Docker
