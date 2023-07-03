@@ -1,8 +1,8 @@
 [package]
-name = "excalidocker"
-version = "0.1.6"
+name = "Excalidocker"
+version = "0.1.7"
 edition = "2021"
-authors = ["Evgeny Tolbakov"]
+authors = ["Evgeny Tolbakov <ev.tolbakov@gmail.com>"]
 description = "Utility to convert your docker-compose into excalidraw"
 repository = "https://github.com/etolbakov/excalidocker-rs"
 license = "MIT"
@@ -16,7 +16,7 @@ categories = ["command-line-utilities"]
 serde = { version = "^1.0", features = ["derive"] }
 serde_json = "^1.0"
 serde_yaml = "0.9.21"
-clap = {version = "4.0.32", features = ["derive"]}
+clap = {version = "4.3.8", features = ["derive", "cargo"]}
 thiserror = "1.0.40"
 rand = "0.8.5"
 isahc = "1.7"

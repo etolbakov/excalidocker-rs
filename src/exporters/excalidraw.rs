@@ -1,83 +1,8 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::{Map, Value};
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct ExcalidrawConfig {
-    pub font: Font,
-    pub services: Services,
-    pub ports: Ports,
-    pub connections: Connections,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct Font {
-    pub size: i32,
-    pub family: i32,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct Services {
-    pub background_color: String,
-    pub fill: String,
-    pub edge: String,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct Ports {
-    pub background_color: String,
-    pub fill: String,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct Connections {
-    pub visible: bool,
-    pub edge: String,
-}
-
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct BoundElement {
-    pub id: String,
-    #[serde(rename = "type")]
-    pub element_type: String,
-}
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Binding {
-    pub element_id: String,
-    pub focus: f32,
-    pub gap: u16,
-}
-
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Roundness {
-    #[serde(rename = "type")]
-    pub roundness_type: i32,
-}
-
-pub fn binding(element_id: String) -> Binding {
-    Binding {
-        element_id,
-        focus: 0.05,
-        gap: 1,
-    }
-}
-
-pub fn arrow_bounded_element(id: String) -> BoundElement {
-    BoundElement {
-        id,
-        element_type: "arrow".to_string(),
-    }
-}
-
-pub fn roundness(edge: String) -> Option<Roundness> {
-    match edge.as_str() {
-        "round" => Some(Roundness { roundness_type: 3 }),
-        _ => None,
-    }
-}
+use super::excalidraw_config::{BoundElement, Roundness};
+use crate::exporters::excalidraw_config::{roundness, Binding};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]

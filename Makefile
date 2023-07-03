@@ -32,7 +32,11 @@ clippy:
 ## 'o' - provided  '--output-path' argument
 ## 's' - provided  '--skip-dependencies' argument
 ## 'c' - provided  '--config-path' argument
-## 'r' - provided   '--input-path' argument has a link to an external (github) file
+## 'r' - provided  '--input-path' argument has a link to an external (github) file
+## 'cfg' - 		   '--show-config' argument	
+
+ecfg:
+	./target/release/excalidocker -C
 
 e1i:
 	./target/release/excalidocker --input-path ./data/compose/docker-compose.yaml

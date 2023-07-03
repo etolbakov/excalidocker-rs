@@ -9,10 +9,12 @@ Rust-based utility to convert docker-compose.yaml files into [excalidraw](https:
 
 Key features
 =================
- - Transform your local docker-compose files into excalidraw with just a single `docker run` command. Showcase your infrastructure designs in a visually appealing and engaging format.
- - Convert external docker-compose files into excalidraw by simply providing a Github link. Easy to share and collaborate.
- - Available for installation on both Linux and MacOS platforms (amd64/arm64).
- - Design customization. Tailor your infrastructure diagrams to your specific needs by customizing font, background colours, styles, etc.
+ - Transform your **local docker-compose** files into excalidraw with just a single `docker run` command. Showcase your infrastructure designs in a visually appealing and engaging format.
+ - Convert **external docker-compose** files into excalidraw by simply providing a Github link. Easy to share and collaborate.
+ - Available for **installation** on both Linux and MacOS platforms (amd64/arm64). Could be installed via 🍺 `brew` and 🐳 `docker`.
+ - Design **customization**. Tailor your infrastructure diagrams to your specific needs by customizing alignment(vertical, horizontal, stepped), font, background colours, styles, etc.
+
+Usage examples could be found [here](./data/examples.md). Demo 🎥 could be found [here](#demo).
 
 Table of contents
 =================
@@ -36,10 +38,10 @@ An idea of writing this utility originates from Robin Moffatt's [tweet](https://
 ## Usage
 ### Docker image
 🐳 `excalidocker` is available as a [Docker image](https://hub.docker.com/r/etolbakov/excalidocker/tags).
-Convert docker-compose files without hassle. Use as a Github action for documentation, presentations, ADRs what have you.
+Convert docker-compose files without hassle. Use as a Github action step for documentation, presentations, ADRs what have you.
 The sky is the limit. 
 
-Convert a local file:
+Convert a _local_ file:
 
  ```sh
 docker run --rm --pull always \
@@ -49,7 +51,7 @@ docker run --rm --pull always \
            > produced-by-image.excalidraw
 ```
 
-Convert an external file:
+Convert an _external_ file:
 
 ```sh
 docker run --rm --pull always \
@@ -76,7 +78,7 @@ The produced `excalidraw` file can be opened in [excalidraw](https://excalidraw.
   ```
 </details>
 
-More command examples are in the [Makefile](/Makefile).
+More command examples could be found either in the [Makefile](/Makefile) or in the [examples](./data/examples.md).
 ### Brew
 To install `excalidocker` with `brew` run the following command: 
 ```
@@ -88,29 +90,45 @@ brew uninstall etolbakov/taps/excalidocker
 ```
 
 ### Binaries
-📚 Download the latest artifact for your platform/architecture from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it.
+📚 Download the latest pre-compiled binaries for your platform/architecture from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it.
+
+```sh
+OS=linux
+ARCH=amd64
+tar -xvzf excalidocker-${OS}-${ARCH}.tgz
+chmod +x excalidocker
+sudo mv excalidocker /usr/local/bin
+```
 
 To get the `help` menu use:
 ```sh
-./excalidocker -h
+excalidocker -h
 ```
 The output should be similar to:
 ```sh
 Utility to convert docker-compose into excalidraw
 
-Usage: excalidocker [OPTIONS] --input-path <INPUT_PATH>
+Usage: 
+Excalidocker 0.1.7
+    ╰→ excalidocker --input-path <INPUT_PATH>
+    ╰→ excalidocker --show-config
 
 Options:
+  -C, --show-config                show configuration file
   -i, --input-path <INPUT_PATH>    file path to the docker-compose.yaml
   -s, --skip-dependencies          display connecting lines between services; if `true` then only service without the lines are rendered
   -o, --output-path <OUTPUT_PATH>  file path for the output excalidraw file. By default the file content is sent to console output
-  -c, --config-path <CONFIG_PATH>  config file path for the excalidraw. [default: excalidocker-config.yaml]
+  -c, --config-path <CONFIG_PATH>  config file path for the excalidraw [default: excalidocker-config.yaml]
   -h, --help                       Print help
   -V, --version                    Print version
 ```
-Usage example:
+Convert docker to excalidraw:
 ```sh
-./excalidocker --input-path /your/path/docker-compose.yaml --output-path /your/path/result.excalidraw
+excalidocker --input-path /your/path/docker-compose.yaml --output-path /your/path/result.excalidraw
+```
+Create a configuration file for further customization:
+```sh
+excalidocker --show-config > sample-config.yaml
 ```
 
 > **Warning**
@@ -126,16 +144,17 @@ Usage example:
 ### Config file
 🎨 `excalidocker` supports basic customization provided via file, for example [excalidocker-config.yaml](./excalidocker-config.yaml).
 At the moment it's possible to customize:
+ - alignment mode (`stepped`(default), `vertical`, `horizontal`)
  - font size and type
  - fill type (`hachure`, `cross-hatch`, `solid`) 
- - backgroud colours for services and ports
+ - background colours for services and ports
  - edge type (`sharp`, `round`)
  - enable/disable connections (has the same effect as `--skip-dependencies` cli option)
 
 ### Demo
 🎥 This is a small demo to see the `excalidocker` in action
 
-![excalidocker-demo](./data/img/excalidocker.gif)
+![excalidocker-demo](./data/img/excalidocker017.gif)
 
 ## Installation
 To build `excalidocker` locally, please follow these steps:
