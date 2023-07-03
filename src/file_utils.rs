@@ -15,7 +15,7 @@ pub fn get_excalidraw_config(file_path: &str) -> ExcalidrawConfig {
     let excalidocker_config_contents = match read_yaml_file(file_path) {
         Ok(contents) => contents,
         Err(_) => {
-            // if we could not find the provided config 
+            // if we could not find the provided config
             // and there is no default config at the default path
             // we use the hardcoded `DEFAULT_CONFIG` itself
             DEFAULT_CONFIG.to_string()

@@ -6,7 +6,9 @@ use clap::{arg, command, Parser};
 use exporters::excalidraw::elements::{
     FONT_SIZE_EXTRA_LARGE, FONT_SIZE_LARGE, FONT_SIZE_MEDIUM, FONT_SIZE_SMALL,
 };
-use exporters::excalidraw_config::{arrow_bounded_element, binding, BoundElement, DEFAULT_CONFIG_PATH};
+use exporters::excalidraw_config::{
+    arrow_bounded_element, binding, BoundElement, DEFAULT_CONFIG_PATH,
+};
 use exporters::excalidraw_config::{margins, ExcalidrawConfig};
 use rand::{distributions::Alphanumeric, Rng};
 use std::collections::HashMap;
@@ -32,7 +34,7 @@ use crate::exporters::excalidraw::elements;
     ╰→ excalidocker --input-path <INPUT_PATH>
     ╰→ excalidocker --show-config",
     clap::crate_name!(),
-    clap::crate_version!()) 
+    clap::crate_version!())
 ))]
 struct Cli {
     /// show configuration file
@@ -470,9 +472,9 @@ fn get_connecting_arrow_points(
     if alignment_mode == "vertical" {
         vec![
             [0, 0],
-            [-1 * 2 * (i + 1) * scale, 0],
+            [-2 * (i + 1) * scale, 0],
             [
-                -1 * 2 * (i + 1) * scale,
+                -2 * (i + 1) * scale,
                 // level_height
                 level_height + scale,
             ],
