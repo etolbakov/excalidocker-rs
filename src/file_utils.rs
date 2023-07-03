@@ -5,6 +5,7 @@ use isahc::ReadResponseExt;
 
 use serde_yaml::{Mapping, Value};
 
+use crate::exporters::excalidraw_config::DEFAULT_CONFIG;
 use crate::{
     error::ExcalidockerError::{self, FileIncorrectExtension, FileNotFound, RemoteFileFailedRead},
     exporters::excalidraw_config::ExcalidrawConfig,
@@ -13,9 +14,11 @@ use crate::{
 pub fn get_excalidraw_config(file_path: &str) -> ExcalidrawConfig {
     let excalidocker_config_contents = match read_yaml_file(file_path) {
         Ok(contents) => contents,
-        Err(err) => {
-            println!("Configuration file issue: {}", err);
-            exit(1);
+        Err(_) => {
+            // if we could not find the provided config 
+            // and there is no default config at the default path
+            // we use the hardcoded `DEFAULT_CONFIG` itself
+            DEFAULT_CONFIG.to_string()
         }
     };
     return match serde_yaml::from_str(&excalidocker_config_contents) {

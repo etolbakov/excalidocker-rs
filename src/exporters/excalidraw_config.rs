@@ -4,6 +4,26 @@ use crate::exporters::excalidraw_config::consts::{
 };
 use serde::{Deserialize, Serialize};
 
+pub const DEFAULT_CONFIG_PATH: &str = "excalidocker-config.yaml";
+
+pub const DEFAULT_CONFIG: &str = r###"
+font:
+  size: 16
+  family: 1
+services:
+  background_color: "#b2f2bb"
+  fill: "hachure"
+  edge: "round"
+ports:
+  background_color: "#a5d8ff"
+  fill: "hachure"
+connections:
+  visible: true
+  edge: "sharp"
+alignment:
+  mode: "stepped"
+"###;
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ExcalidrawConfig {
     pub font: Font,

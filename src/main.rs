@@ -6,7 +6,7 @@ use clap::{arg, command, Parser};
 use exporters::excalidraw::elements::{
     FONT_SIZE_EXTRA_LARGE, FONT_SIZE_LARGE, FONT_SIZE_MEDIUM, FONT_SIZE_SMALL,
 };
-use exporters::excalidraw_config::{arrow_bounded_element, binding, BoundElement};
+use exporters::excalidraw_config::{arrow_bounded_element, binding, BoundElement, DEFAULT_CONFIG_PATH};
 use exporters::excalidraw_config::{margins, ExcalidrawConfig};
 use rand::{distributions::Alphanumeric, Rng};
 use std::collections::HashMap;
@@ -46,11 +46,9 @@ struct Cli {
     #[arg(short, long)]
     output_path: Option<String>,
     /// config file path for the excalidraw.
-    #[arg(short, long, default_value_t = CONFIG_DEFAULT_PATH.to_string())]
+    #[arg(short, long, default_value_t = DEFAULT_CONFIG_PATH.to_string())]
     config_path: String,
 }
-
-pub const CONFIG_DEFAULT_PATH: &str = "excalidocker-config.yaml";
 
 #[derive(Debug, Clone)]
 struct ContainerPoint(String, i32, i32);
@@ -535,7 +533,12 @@ fn get_host_port_arrow_points(alignment_mode: &str, i: i32) -> Vec<[i32; 2]> {
     }
 }
 
-fn get_host_port_arrow_xy(alignment_mode: &str, height: &i32, width: &i32, container_width: &i32) -> (i32, i32) {
+fn get_host_port_arrow_xy(
+    alignment_mode: &str,
+    height: &i32,
+    width: &i32,
+    container_width: &i32,
+) -> (i32, i32) {
     if alignment_mode == "vertical" {
         (*container_width, height / 2)
     } else {
