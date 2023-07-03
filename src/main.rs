@@ -22,14 +22,17 @@ use crate::error::ExcalidockerError::InvalidDockerCompose;
 use crate::exporters::excalidraw::elements;
 
 #[derive(Parser)]
-#[command(name = "Excalidocker")]
-#[command(author = "Evgeny Tolbakov <ev.tolbakov@gmail.com>")]
-#[command(version = "0.1.7")]
-#[command(about = "Utility to convert docker-compose into excalidraw", long_about = None)]
-#[command(override_usage(
+#[command(name = clap::crate_name!())]
+#[command(author = clap::crate_authors!())]
+#[command(version = clap::crate_version!())]
+#[command(about = clap::crate_description!(), long_about = None)]
+#[command(override_usage(format!(
     "
-╰→ excalidocker --input-path <INPUT_PATH>
-╰→ excalidocker --show-config"
+{} {}
+    ╰→ excalidocker --input-path <INPUT_PATH>
+    ╰→ excalidocker --show-config",
+    clap::crate_name!(),
+    clap::crate_version!()) 
 ))]
 struct Cli {
     /// show configuration file

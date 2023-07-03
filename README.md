@@ -90,19 +90,28 @@ brew uninstall etolbakov/taps/excalidocker
 ```
 
 ### Binaries
-📚 Download the latest artifact for your platform/architecture from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it.
+📚 Download the latest pre-compiled binaries for your platform/architecture from [releases](https://github.com/etolbakov/excalidocker-rs/releases) and ungzip it.
+
+```sh
+OS=linux
+ARCH=amd64
+tar -xvzf excalidocker-${OS}-${ARCH}.tgz
+chmod +x excalidocker
+sudo mv excalidocker /usr/local/bin
+```
 
 To get the `help` menu use:
 ```sh
-./excalidocker -h
+excalidocker -h
 ```
 The output should be similar to:
 ```sh
 Utility to convert docker-compose into excalidraw
 
 Usage: 
-╰→ excalidocker --input-path <INPUT_PATH>
-╰→ excalidocker --show-config
+Excalidocker 0.1.7
+    ╰→ excalidocker --input-path <INPUT_PATH>
+    ╰→ excalidocker --show-config
 
 Options:
   -C, --show-config                show configuration file
@@ -115,11 +124,11 @@ Options:
 ```
 Convert docker to excalidraw:
 ```sh
-./excalidocker --input-path /your/path/docker-compose.yaml --output-path /your/path/result.excalidraw
+excalidocker --input-path /your/path/docker-compose.yaml --output-path /your/path/result.excalidraw
 ```
 Create a configuration file for further customization:
 ```sh
-./excalidocker --show-config > sample-config.yaml
+excalidocker --show-config > sample-config.yaml
 ```
 
 > **Warning**
