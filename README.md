@@ -14,7 +14,12 @@ Key features
  - Available for **installation** on both Linux and MacOS platforms (amd64/arm64). Could be installed via 🍺 `brew` and 🐳 `docker`.
  - Design **customization**. Tailor your infrastructure diagrams to your specific needs by customizing alignment(vertical, horizontal, stepped), font, background colours, styles, etc.
 
-Usage examples could be found [here](./data/examples.md). Demo 🎥 could be found [here](#demo).
+### Demo 🎥 
+If a picture is worth a thousand words, then is a video worth a million?
+
+![excalidocker-demo](./data/img/excalidocker017.gif)
+
+Usage examples could be found [here](./data/examples.md).
 
 Table of contents
 =================
@@ -25,20 +30,19 @@ Table of contents
       * [Brew](#brew)
       * [Binaries](#binaries)
       * [Config file](#config-file)
-      * [Demo](#demo)
    * [Installation](#installation)
    * [Contributing](#contributing)
    * [Roadmap](#roadmap)
 <!--te-->
 
 ## Motivation
-An idea of writing this utility originates from Robin Moffatt's [tweet](https://twitter.com/rmoff/status/1659214185220423685).
+The idea of writing this utility originates from Robin Moffatt's [tweet](https://twitter.com/rmoff/status/1659214185220423685).
 ![motivation](./data/img/motivation.png)
 
 ## Usage
 ### Docker image
 🐳 `excalidocker` is available as a [Docker image](https://hub.docker.com/r/etolbakov/excalidocker/tags).
-Convert docker-compose files without hassle. Use as a Github action step for documentation, presentations, ADRs what have you.
+Convert docker-compose files without hassle. Use as a Github action step for documentation, presentations, [ADRs](https://adr.github.io/) what have you.
 The sky is the limit. 
 
 Convert a _local_ file:
@@ -150,11 +154,6 @@ At the moment it's possible to customize:
  - background colours for services and ports
  - edge type (`sharp`, `round`)
  - enable/disable connections (has the same effect as `--skip-dependencies` cli option)
-
-### Demo
-🎥 This is a small demo to see the `excalidocker` in action
-
-![excalidocker-demo](./data/img/excalidocker017.gif)
 
 ## Installation
 To build `excalidocker` locally, please follow these steps:
