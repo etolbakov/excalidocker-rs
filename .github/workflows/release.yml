@@ -194,6 +194,7 @@ jobs:
   docker:
     name: Build docker image
     needs: [proceed_release]
+    if: needs.proceed_release.outputs.PROCEED_WITH_RELEASE == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -280,7 +281,6 @@ jobs:
           echo "validation help"
           docker run --rm --pull always etolbakov/excalidocker:${{ env.IMAGE_TAG }} 
 
-  
   release:
     name: Release artifacts
     needs: [proceed_release, build-macos, build-linux, docker]
