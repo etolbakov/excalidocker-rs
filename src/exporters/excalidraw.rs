@@ -1,7 +1,7 @@
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-use super::excalidraw_config::{BoundElement, Roundness};
+use super::excalidraw_config::{consts::NON_LOCKED, BoundElement, Roundness};
 use crate::exporters::excalidraw_config::{roundness, Binding};
 
 #[derive(Serialize)]
@@ -54,24 +54,6 @@ pub enum Element {
         text_align: String,
         vertical_align: String,
         baseline: i32,
-    },
-    #[serde(rename_all = "camelCase")]
-    Line {
-        x: i32,
-        y: i32,
-        width: i32,
-        height: i32,
-        angle: i32,
-        stroke_color: String,
-        background_color: String,
-        fill_style: String,
-        stroke_width: i32,
-        stroke_style: String,
-        roughness: i32,
-        opacity: i32,
-        stroke_sharpness: String,
-        locked: bool,
-        points: Vec<[i32; 2]>,
     },
     #[serde(rename_all = "camelCase")]
     Arrow {
@@ -156,6 +138,7 @@ pub mod elements {
     pub const VERTICAL_ALIGN_TOP: &str = "top";
 }
 
+#[allow(clippy::too_many_arguments)]
 impl Element {
     pub fn text(
         x: i32,
@@ -171,7 +154,6 @@ impl Element {
         stroke_style: String,
         opacity: i32,
         stroke_sharpness: String,
-        locked: bool,
         text: String,
         font_size: i32,
         font_family: i32,
@@ -193,48 +175,13 @@ impl Element {
             roughness: 0,
             opacity,
             stroke_sharpness,
-            locked,
+            locked: NON_LOCKED,
             text,
             font_size,
             font_family,
             text_align,
             vertical_align,
             baseline: 15,
-        }
-    }
-
-    pub fn line(
-        x: i32,
-        y: i32,
-        width: i32,
-        height: i32,
-        angle: i32,
-        stroke_color: String,
-        background_color: String,
-        fill_style: String,
-        stroke_width: i32,
-        stroke_style: String,
-        opacity: i32,
-        stroke_sharpness: String,
-        locked: bool,
-        points: Vec<[i32; 2]>,
-    ) -> Self {
-        Self::Line {
-            x,
-            y,
-            width,
-            height,
-            angle,
-            stroke_color,
-            background_color,
-            fill_style,
-            stroke_width,
-            stroke_style,
-            roughness: 2, // roughness: 0
-            opacity,
-            stroke_sharpness,
-            locked,
-            points,
         }
     }
 
@@ -255,7 +202,6 @@ impl Element {
         roundness: Option<Roundness>,
         opacity: i32,
         stroke_sharpness: String,
-        locked: bool,
         points: Vec<[i32; 2]>,
     ) -> Self {
         Self::Arrow {
@@ -276,7 +222,7 @@ impl Element {
             roughness: 2, // roughness: 0
             opacity,
             stroke_sharpness,
-            locked,
+            locked: NON_LOCKED,
             points,
         }
     }
@@ -298,7 +244,6 @@ impl Element {
         roundness: Option<Roundness>,
         opacity: i32,
         stroke_sharpness: String,
-        locked: bool,
     ) -> Self {
         Self::Rectangle {
             id,
@@ -318,7 +263,7 @@ impl Element {
             roundness,
             opacity,
             stroke_sharpness,
-            locked,
+            locked: NON_LOCKED,
         }
     }
 
@@ -338,7 +283,6 @@ impl Element {
         stroke_style: String,
         opacity: i32,
         stroke_sharpness: String,
-        locked: bool,
     ) -> Self {
         Self::Ellipse {
             id,
@@ -357,7 +301,7 @@ impl Element {
             roughness: 1, // roughness: 0
             opacity,
             stroke_sharpness,
-            locked,
+            locked: NON_LOCKED,
         }
     }
 
@@ -371,7 +315,6 @@ impl Element {
         bound_elements: Vec<BoundElement>,
         background_color: String,
         fill_style: String,
-        locked: bool,
     ) -> Self {
         Self::ellipse(
             id,
@@ -389,7 +332,6 @@ impl Element {
             elements::STROKE_STYLE.into(),
             elements::OPACITY,
             elements::STROKE_SHARPNESS.into(),
-            locked,
         )
     }
 
@@ -400,7 +342,6 @@ impl Element {
         group_ids: Vec<String>,
         font_size: i32,
         font_family: i32,
-        locked: bool,
     ) -> Self {
         Self::text(
             x,
@@ -416,55 +357,11 @@ impl Element {
             elements::STROKE_STYLE.into(),
             elements::OPACITY,
             elements::STROKE_SHARPNESS.into(),
-            locked,
             text,
             font_size,   //elements::FONT_SIZE_SMALL,
             font_family, //elements::FONT_FAMILY_MONOSPACE,
             elements::TEXT_ALIGN_LEFT.into(),
             elements::VERTICAL_ALIGN_TOP.into(),
-        )
-    }
-
-    pub fn simple_line(
-        x: i32,
-        y: i32,
-        locked: bool,
-        stroke_style: String,
-        points: Vec<[i32; 2]>,
-    ) -> Self {
-        let mut min_x = 0;
-        let mut max_x = 0;
-        let mut min_y = 0;
-        let mut max_y = 0;
-        for p in &points {
-            if p[0] > max_x {
-                max_x = p[0];
-            }
-            if p[0] < min_x {
-                min_x = p[0];
-            }
-            if p[1] > max_y {
-                max_y = p[1];
-            }
-            if p[1] < min_y {
-                min_y = p[1];
-            }
-        }
-        Self::line(
-            x,
-            y,
-            min_x.abs() + max_x.abs(),
-            min_y.abs() + max_y.abs(),
-            elements::ANGLE,
-            elements::STROKE_COLOR.into(),
-            elements::BACKGROUND_COLOR.into(),
-            elements::FILL_STYLE.into(),
-            elements::STROKE_WIDTH,
-            stroke_style,
-            elements::OPACITY,
-            elements::STROKE_SHARPNESS.into(),
-            locked,
-            points,
         )
     }
 
@@ -474,7 +371,6 @@ impl Element {
         y: i32,
         width: i32,
         height: i32,
-        locked: bool,
         stroke_style: String,
         edge: String,
         points: Vec<[i32; 2]>,
@@ -498,7 +394,6 @@ impl Element {
             roundness(edge),
             elements::OPACITY,
             elements::STROKE_SHARPNESS.into(),
-            locked,
             points,
         )
     }
@@ -514,7 +409,6 @@ impl Element {
         background_color: String,
         fill_style: String,
         edge: String,
-        locked: bool,
     ) -> Self {
         Self::rectangle(
             id,
@@ -533,7 +427,6 @@ impl Element {
             roundness(edge),
             elements::OPACITY,
             elements::STROKE_SHARPNESS.into(),
-            locked,
         )
     }
 }

@@ -117,6 +117,7 @@ pub mod consts {
     pub const NO_X_ALIGNMENT_FACTOR: i32 = 0;
     pub const Y_ALIGNMENT_FACTOR: i32 = 1;
     pub const NO_Y_ALIGNMENT_FACTOR: i32 = 0;
+    pub const NON_LOCKED: bool = false;
 }
 
 /// Based on the previous implementation it was observed

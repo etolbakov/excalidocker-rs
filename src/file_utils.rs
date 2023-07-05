@@ -21,13 +21,13 @@ pub fn get_excalidraw_config(file_path: &str) -> ExcalidrawConfig {
             DEFAULT_CONFIG.to_string()
         }
     };
-    return match serde_yaml::from_str(&excalidocker_config_contents) {
+    match serde_yaml::from_str(&excalidocker_config_contents) {
         Ok(cfg) => cfg,
         Err(err) => {
             println!("Configuration parsing issue: {}", err);
             exit(1);
         }
-    };
+    }
 }
 
 pub fn get_docker_compose_content(file_path: &str) -> Mapping {
