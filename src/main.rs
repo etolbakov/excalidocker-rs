@@ -155,7 +155,6 @@ fn main() {
     let width = 140;
     let height = 60;
     let port_diameter = 60;
-    let locked = false;
 
     let mut components = Vec::new();
     let mut container_name_rectangle_structs = HashMap::new();
@@ -186,8 +185,7 @@ fn main() {
 
     let _networks = docker_compose_yaml
         .get("networks")
-        .map(|v| DockerContainer::parse_networks(v))
-        .flatten();
+        .and_then(DockerContainer::parse_networks);
     // dbg!(networks);
 
     let mut identifier: i32 = 1;
@@ -263,7 +261,6 @@ fn main() {
                 vec![arrow_bounded_element(host_port_arrow_id.clone())],
                 excalidraw_config.ports.background_color.clone(),
                 excalidraw_config.ports.fill.clone(),
-                locked,
             );
             let host_port_text = Element::draw_small_monospaced_text(
                 host_port_str.clone(),
@@ -272,7 +269,6 @@ fn main() {
                 ellipse_port_group.clone(),
                 excalidraw_config.font.size,
                 excalidraw_config.font.family,
-                locked,
             );
 
             let (host_port_arrow_x, host_port_arrow_y) =
@@ -283,7 +279,6 @@ fn main() {
                 y + host_port_arrow_y,
                 200,
                 100,
-                locked,
                 elements::STROKE_STYLE.into(),
                 "sharp".to_string(),
                 get_host_port_arrow_points(alignment_mode, i),
@@ -306,7 +301,6 @@ fn main() {
                     container_group.clone(),
                     excalidraw_config.font.size,
                     excalidraw_config.font.family,
-                    locked,
                 );
                 excalidraw_file.elements.push(container_port_text);
             }
@@ -357,14 +351,14 @@ fn main() {
             let x_parent = &parent_point.1;
             let y_parent = &parent_point.2;
             let level_height = y_parent - y;
-            let interation_x_margin = (i + 1) as i32 * scale;
+            let interation_x_margin = (i + 1) * scale;
 
             let connecting_arrow_points = get_connecting_arrow_points(
                 alignment_mode,
-                &x,
-                &y,
-                &x_parent,
-                &y_parent,
+                x,
+                y,
+                x_parent,
+                y_parent,
                 &height,
                 &width,
                 &interation_x_margin,
@@ -381,7 +375,6 @@ fn main() {
                 y + connecting_arrow_y,
                 0,
                 y_margin,
-                locked,
                 elements::CONNECTION_STYLE.into(),
                 excalidraw_config.connections.edge.clone(),
                 connecting_arrow_points,
@@ -419,7 +412,6 @@ fn main() {
             excalidraw_config.services.background_color.clone(),
             excalidraw_config.services.fill.clone(),
             excalidraw_config.services.edge.clone(),
-            locked,
         );
         let container_text = Element::draw_small_monospaced_text(
             rect.container_name.clone(),
@@ -428,7 +420,6 @@ fn main() {
             rect.text_group_ids.clone(),
             excalidraw_config.font.size,
             excalidraw_config.font.family,
-            locked,
         );
         excalidraw_file.elements.push(container_rectangle);
         excalidraw_file.elements.push(container_text);
@@ -456,6 +447,7 @@ fn get_connecting_arrow_xy(alignment_mode: &str, interation_margin: i32) -> (i32
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn get_connecting_arrow_points(
     alignment_mode: &str,
     x: &i32,
