@@ -1,8 +1,12 @@
 # excalidocker-rs
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/etolbakov/excalidocker-rs)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=plastic)](LICENSE)
+❘
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/etolbakov/excalidocker-rs?style=plastic)
 ![Docker Pulls](https://img.shields.io/docker/pulls/etolbakov/excalidocker?style=plastic)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Maintenance](https://img.shields.io/badge/maintenance-actively--developed-brightgreen.svg)
+❘
+[![Activity](https://img.shields.io/github/commit-activity/m/etolbakov/excalidocker-rs?color=brightgreen&style=plastic)](https://github.com/etolbakov/excalidocker-rs/graphs/commit-activity)
+[![GitHub closed issues](https://img.shields.io/github/issues-closed/etolbakov/excalidocker-rs?color=brightgreen&style=plastic)](https://github.com/etolbakov/excalidocker-rs/issues?q=is%3Aissue+is%3Aclosed)
+![Maintenance](https://img.shields.io/badge/maintenance-actively--developed-brightgreen.svg?style=plastic)
 
 Rust-based utility to convert docker-compose.yaml files into [excalidraw](https://excalidraw.com/) files.
 ![excalidocker](./data/img/excalidocker-colour-edge.png)
