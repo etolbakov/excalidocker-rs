@@ -11,7 +11,7 @@ use exporters::excalidraw_config::{
 };
 use exporters::excalidraw_config::{margins, ExcalidrawConfig};
 use rand::{distributions::Alphanumeric, Rng};
-use std::collections::HashMap;
+use std::collections::{HashMap, BTreeMap};
 use std::collections::HashSet;
 use std::fs;
 use std::vec;
@@ -110,6 +110,31 @@ fn traverse_in_hierarchy(
     }
 }
 
+fn traverse_in_hierarchy2(
+    name: &str,
+    dependencies: &BTreeMap<&str, DependencyComponent>,
+    containers_traversal_order: &mut Vec<String>,
+    visited: &mut Vec<String>,
+) {
+    if let Some(children) = dependencies.get(name) {
+        for child in &children.parent {
+            if !visited.contains(&child.name) {
+                traverse_in_hierarchy2(
+                    &child.name,
+                    dependencies,
+                    containers_traversal_order,
+                    visited,
+                );
+            }
+        }
+    }
+
+    if !visited.contains(&name.to_string()) {
+        visited.push(name.to_string());
+        containers_traversal_order.push(name.to_string());
+    }
+}
+
 // fn build_hierarchy(containers: &HashMap<String, Container>) -> HashMap<String, Vec<String>> {
 //     let mut dependencies: HashMap<String, Vec<String>> = HashMap::new();
 
@@ -159,7 +184,9 @@ fn main() {
     let mut components = Vec::new();
     let mut container_name_rectangle_structs = HashMap::new();
     let mut container_name_to_point = HashMap::new();
-    let mut container_name_to_parents: HashMap<&str, DependencyComponent> = HashMap::new();
+    //let mut container_name_to_parents: HashMap<&str, DependencyComponent> = HashMap::new();
+    let mut container_name_to_parents: BTreeMap<&str, DependencyComponent> = BTreeMap::new();
+    
     let mut container_name_to_container_struct = HashMap::new();
 
     let input_path = &cli.input_path.unwrap();
@@ -575,19 +602,18 @@ fn extract_host_container_ports(port: &str) -> (String, String) {
 }
 
 fn find_containers_traversal_order(
-    container_name_to_parents: HashMap<&str, DependencyComponent>,
+    container_name_to_parents: BTreeMap<&str, DependencyComponent>,
 ) -> Vec<String> {
     let mut containers_traversal_order: Vec<String> = Vec::new();
-    let mut visited: HashSet<String> = HashSet::new();
+    let mut visited: Vec<String> = Vec::new();
     for name in container_name_to_parents.keys() {
-        traverse_in_hierarchy(
+        traverse_in_hierarchy2(
             name,
             &container_name_to_parents,
             &mut containers_traversal_order,
             &mut visited,
         );
     }
-    // Vec::from_iter(visited)
     containers_traversal_order
 }
 
