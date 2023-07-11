@@ -11,8 +11,8 @@ use exporters::excalidraw_config::{
 };
 use exporters::excalidraw_config::{margins, ExcalidrawConfig};
 use rand::{distributions::Alphanumeric, Rng};
-use std::collections::{HashMap, BTreeMap};
 use std::collections::HashSet;
+use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::vec;
 
@@ -104,9 +104,9 @@ fn traverse_in_hierarchy(
         }
     }
 
-    if !visited.contains(&name.to_string()) {
-        visited.insert(name.to_string());
+    if !visited.contains(name) {
         containers_traversal_order.push(name.to_string());
+        visited.insert(name.to_string());
     }
 }
 
@@ -160,7 +160,7 @@ fn main() {
     let mut container_name_rectangle_structs = HashMap::new();
     let mut container_name_to_point = HashMap::new();
     let mut container_name_to_parents: BTreeMap<&str, DependencyComponent> = BTreeMap::new();
-    
+
     let mut container_name_to_container_struct = HashMap::new();
 
     let input_path = &cli.input_path.unwrap();
