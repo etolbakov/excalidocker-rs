@@ -1,6 +1,7 @@
 mod error;
 mod exporters;
 mod file_utils;
+mod color_utils;
 
 use clap::{arg, command, Parser};
 use exporters::excalidraw::elements::{
@@ -691,8 +692,7 @@ impl DockerContainer {
         let mapping = value.as_mapping().unwrap();
         let mut container = DockerContainer::new(id);
         for (key, value) in mapping {
-            let key_str = key.as_str().unwrap();
-            match key_str {
+            match key.as_str().unwrap() {
                 "image" => {
                     if let Value::String(image) = value {
                         container.image = image.clone();

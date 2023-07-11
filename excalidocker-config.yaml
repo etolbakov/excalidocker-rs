@@ -2,7 +2,7 @@ font:
   size: 16 # recommended S - 16,M - 20,L - 28, XL - 36
   family: 1 # 1 - hand-drawn, 2 - normal, 3 - code
 services: # rectangle
-  background_color: "#b2f2bb"
+  background_color: "tomato"
   fill: "hachure" # "hachure", "cross-hatch", "solid"
   edge: "round" # "sharp", "round"
 ports: # ellipse
