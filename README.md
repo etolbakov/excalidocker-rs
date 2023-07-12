@@ -155,7 +155,7 @@ At the moment it's possible to customize:
  - alignment mode (`stepped`(default), `vertical`, `horizontal`)
  - font size and type
  - fill type (`hachure`, `cross-hatch`, `solid`) 
- - background colours for services and ports
+ - background colours for services and ports. Both hex / [colour names](https://github.com/etolbakov/excalidocker-rs/blob/main/src/color_utils.rs) are supported.
  - edge type (`sharp`, `round`)
  - enable/disable connections (has the same effect as `--skip-dependencies` cli option)
 

@@ -20,6 +20,7 @@ clap = {version = "4.3.8", features = ["derive", "cargo"]}
 thiserror = "1.0.40"
 rand = "0.8.5"
 isahc = "1.7"
+phf = { version = "0.11", features = ["macros"] }
 
 # https://github.com/sfackler/rust-openssl/issues/1021
 openssl = { version = "0.10", features = ["vendored"] }

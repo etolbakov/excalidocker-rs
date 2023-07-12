@@ -1,6 +1,7 @@
 mod error;
 mod exporters;
 mod file_utils;
+mod color_utils;
 
 use clap::{arg, command, Parser};
 use exporters::excalidraw::elements::{
@@ -11,8 +12,8 @@ use exporters::excalidraw_config::{
 };
 use exporters::excalidraw_config::{margins, ExcalidrawConfig};
 use rand::{distributions::Alphanumeric, Rng};
-use std::collections::HashMap;
 use std::collections::HashSet;
+use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::vec;
 
@@ -87,15 +88,15 @@ impl DependencyComponent {
 
 fn traverse_in_hierarchy(
     name: &str,
-    dependencies: &HashMap<&str, DependencyComponent>,
+    dependencies: &BTreeMap<&str, DependencyComponent>,
     containers_traversal_order: &mut Vec<String>,
     visited: &mut HashSet<String>,
 ) {
     if let Some(children) = dependencies.get(name) {
         for child in &children.parent {
-            if !visited.contains(&child.name.to_string()) {
+            if !visited.contains(&child.name) {
                 traverse_in_hierarchy(
-                    child.name.as_str(),
+                    &child.name,
                     dependencies,
                     containers_traversal_order,
                     visited,
@@ -156,10 +157,10 @@ fn main() {
     let height = 60;
     let port_diameter = 60;
 
-    let mut components = Vec::new();
     let mut container_name_rectangle_structs = HashMap::new();
     let mut container_name_to_point = HashMap::new();
-    let mut container_name_to_parents: HashMap<&str, DependencyComponent> = HashMap::new();
+    let mut container_name_to_parents: BTreeMap<&str, DependencyComponent> = BTreeMap::new();
+
     let mut container_name_to_container_struct = HashMap::new();
 
     let input_path = &cli.input_path.unwrap();
@@ -205,13 +206,12 @@ fn main() {
                     .push(DependencyComponent::new("".to_string(), name.to_string()))
             });
         }
-        components.push(dependency_component.clone());
         container_name_to_parents.insert(container_name_str, dependency_component);
         container_name_to_container_struct.insert(container_name_str, container_struct);
         identifier += 1;
     }
 
-    let containers_traversal_order = find_containers_traversal_order(container_name_to_parents);
+    let containers_traversal_order = find_containers_traversal_order(container_name_to_parents.clone());
 
     for cn_name in containers_traversal_order {
         let container_width =
@@ -323,8 +323,8 @@ fn main() {
         container_name_rectangle_structs.insert(cn_name, rectangle_struct);
     }
 
-    for DependencyComponent { id, name, parent } in &components {
-        let ContainerPoint(_, x, y) = container_name_to_point.get(name).unwrap();
+    for (container_name, DependencyComponent { id, name: _, parent }) in &container_name_to_parents {
+        let ContainerPoint(_, x, y) = container_name_to_point.get(*container_name).unwrap();
         // any of those two conditions (cli argument or configuration setting) can switch off the connections
         let sorted_container_points =
             if cli.skip_dependencies || !excalidraw_config.connections.visible {
@@ -392,7 +392,7 @@ fn main() {
             parent_temp_struct
                 .bound_elements
                 .push(connecting_arrow_bound.clone());
-            let current_temp_struct = container_name_rectangle_structs.get_mut(name).unwrap();
+            let current_temp_struct = container_name_rectangle_structs.get_mut(*container_name).unwrap();
             current_temp_struct
                 .bound_elements
                 .push(connecting_arrow_bound);
@@ -575,7 +575,7 @@ fn extract_host_container_ports(port: &str) -> (String, String) {
 }
 
 fn find_containers_traversal_order(
-    container_name_to_parents: HashMap<&str, DependencyComponent>,
+    container_name_to_parents: BTreeMap<&str, DependencyComponent>,
 ) -> Vec<String> {
     let mut containers_traversal_order: Vec<String> = Vec::new();
     let mut visited: HashSet<String> = HashSet::new();
@@ -587,7 +587,6 @@ fn find_containers_traversal_order(
             &mut visited,
         );
     }
-    // Vec::from_iter(visited)
     containers_traversal_order
 }
 
@@ -691,8 +690,7 @@ impl DockerContainer {
         let mapping = value.as_mapping().unwrap();
         let mut container = DockerContainer::new(id);
         for (key, value) in mapping {
-            let key_str = key.as_str().unwrap();
-            match key_str {
+            match key.as_str().unwrap() {
                 "image" => {
                     if let Value::String(image) = value {
                         container.image = image.clone();
