@@ -157,7 +157,6 @@ fn main() {
     let height = 60;
     let port_diameter = 60;
 
-    let mut components = Vec::new();
     let mut container_name_rectangle_structs = HashMap::new();
     let mut container_name_to_point = HashMap::new();
     let mut container_name_to_parents: BTreeMap<&str, DependencyComponent> = BTreeMap::new();
@@ -207,13 +206,12 @@ fn main() {
                     .push(DependencyComponent::new("".to_string(), name.to_string()))
             });
         }
-        components.push(dependency_component.clone());
         container_name_to_parents.insert(container_name_str, dependency_component);
         container_name_to_container_struct.insert(container_name_str, container_struct);
         identifier += 1;
     }
 
-    let containers_traversal_order = find_containers_traversal_order(container_name_to_parents);
+    let containers_traversal_order = find_containers_traversal_order(container_name_to_parents.clone());
 
     for cn_name in containers_traversal_order {
         let container_width =
@@ -325,8 +323,8 @@ fn main() {
         container_name_rectangle_structs.insert(cn_name, rectangle_struct);
     }
 
-    for DependencyComponent { id, name, parent } in &components {
-        let ContainerPoint(_, x, y) = container_name_to_point.get(name).unwrap();
+    for (container_name, DependencyComponent { id, name: _, parent }) in &container_name_to_parents {
+        let ContainerPoint(_, x, y) = container_name_to_point.get(*container_name).unwrap();
         // any of those two conditions (cli argument or configuration setting) can switch off the connections
         let sorted_container_points =
             if cli.skip_dependencies || !excalidraw_config.connections.visible {
@@ -394,7 +392,7 @@ fn main() {
             parent_temp_struct
                 .bound_elements
                 .push(connecting_arrow_bound.clone());
-            let current_temp_struct = container_name_rectangle_structs.get_mut(name).unwrap();
+            let current_temp_struct = container_name_rectangle_structs.get_mut(*container_name).unwrap();
             current_temp_struct
                 .bound_elements
                 .push(connecting_arrow_bound);
