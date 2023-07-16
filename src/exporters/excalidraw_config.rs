@@ -1,9 +1,9 @@
 use crate::{
+    color_utils::COLOR_TO_HEX,
     exporters::excalidraw_config::consts::{
         NO_X_ALIGNMENT_FACTOR, NO_X_MARGIN, NO_Y_ALIGNMENT_FACTOR, NO_Y_MARGIN, X_ALIGNMENT_FACTOR,
         X_MARGIN, Y_ALIGNMENT_FACTOR, Y_MARGIN,
     },
-    color_utils::COLOR_TO_HEX,
 };
 use serde::{Deserialize, Serialize, Serializer};
 

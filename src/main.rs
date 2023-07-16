@@ -1,7 +1,7 @@
+mod color_utils;
 mod error;
 mod exporters;
 mod file_utils;
-mod color_utils;
 
 use clap::{arg, command, Parser};
 use exporters::excalidraw::elements::{
@@ -77,12 +77,8 @@ struct DependencyComponent {
 }
 
 impl DependencyComponent {
-    fn new(id: String, name: String) -> Self {
-        Self {
-            id,
-            name,
-            parent: Vec::new(),
-        }
+    fn new(id: String, name: String, parent: Vec<DependencyComponent>) -> Self {
+        Self { id, name, parent }
     }
 }
 
@@ -197,21 +193,18 @@ fn main() {
             DockerContainer::convert_to_container(container_id.clone(), container_data_val);
         let container_name_str = container_name_val.as_str().unwrap();
 
-        let mut dependency_component =
-            DependencyComponent::new(container_id, container_name_str.to_string());
-        if let Some(dependencies) = &container_struct.depends_on {
-            dependencies.iter().for_each(|name| {
-                dependency_component
-                    .parent
-                    .push(DependencyComponent::new("".to_string(), name.to_string()))
-            });
-        }
+        let dependency_component = create_dependency_component(
+            container_id,
+            container_name_str.to_string(),
+            &container_struct.depends_on,
+        );
         container_name_to_parents.insert(container_name_str, dependency_component);
         container_name_to_container_struct.insert(container_name_str, container_struct);
         identifier += 1;
     }
 
-    let containers_traversal_order = find_containers_traversal_order(container_name_to_parents.clone());
+    let containers_traversal_order =
+        find_containers_traversal_order(container_name_to_parents.clone());
 
     for cn_name in containers_traversal_order {
         let container_width =
@@ -323,7 +316,15 @@ fn main() {
         container_name_rectangle_structs.insert(cn_name, rectangle_struct);
     }
 
-    for (container_name, DependencyComponent { id, name: _, parent }) in &container_name_to_parents {
+    for (
+        container_name,
+        DependencyComponent {
+            id,
+            name: _,
+            parent,
+        },
+    ) in &container_name_to_parents
+    {
         let ContainerPoint(_, x, y) = container_name_to_point.get(*container_name).unwrap();
         // any of those two conditions (cli argument or configuration setting) can switch off the connections
         let sorted_container_points =
@@ -392,7 +393,9 @@ fn main() {
             parent_temp_struct
                 .bound_elements
                 .push(connecting_arrow_bound.clone());
-            let current_temp_struct = container_name_rectangle_structs.get_mut(*container_name).unwrap();
+            let current_temp_struct = container_name_rectangle_structs
+                .get_mut(*container_name)
+                .unwrap();
             current_temp_struct
                 .bound_elements
                 .push(connecting_arrow_bound);
@@ -436,6 +439,23 @@ fn main() {
             );
         }
         None => println!("{}", excalidraw_data),
+    }
+}
+
+fn create_dependency_component(
+    id: String,
+    container_name: String,
+    depends_on: &Option<Vec<String>>,
+) -> DependencyComponent {
+    match depends_on {
+        Some(deps) => DependencyComponent::new(
+            id,
+            container_name,
+            deps.iter()
+                .map(|name| DependencyComponent::new("".to_string(), name.to_string(), Vec::new()))
+                .collect::<Vec<DependencyComponent>>(),
+        ),
+        None => DependencyComponent::new(id, container_name, Vec::new()),
     }
 }
 

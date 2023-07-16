@@ -1,5 +1,6 @@
 use phf::phf_map;
 
+/// Taken from https://github.com/bahamas10/css-color-names/blob/master/getcolors.sh
 pub static COLOR_TO_HEX: phf::Map<&str, &str> = phf_map! {
     "aliceblue"         => "#f0f8ff",
     "antiquewhite"      => "#faebd7",
