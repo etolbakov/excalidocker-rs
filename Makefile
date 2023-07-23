@@ -14,8 +14,11 @@ s:
 check:
 	cargo check --all-features
 
+fmtc:
+	cargo fmt --all --check
+
 fmt:
-	cargo fmt -- --check
+	cargo fmt --all
 
 clippy:
 	cargo clippy -- -D warnings	

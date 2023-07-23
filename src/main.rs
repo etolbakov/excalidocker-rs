@@ -11,6 +11,7 @@ use exporters::excalidraw_config::{
     arrow_bounded_element, binding, BoundElement, DEFAULT_CONFIG_PATH,
 };
 use exporters::excalidraw_config::{margins, ExcalidrawConfig};
+use indexmap::IndexMap;
 use rand::{distributions::Alphanumeric, Rng};
 use std::collections::HashSet;
 use std::collections::{BTreeMap, HashMap};
@@ -84,7 +85,7 @@ impl DependencyComponent {
 
 fn traverse_in_hierarchy(
     name: &str,
-    dependencies: &BTreeMap<&str, DependencyComponent>,
+    dependencies: &IndexMap<&str, DependencyComponent>,
     containers_traversal_order: &mut Vec<String>,
     visited: &mut HashSet<String>,
 ) {
@@ -155,7 +156,7 @@ fn main() {
 
     let mut container_name_rectangle_structs = HashMap::new();
     let mut container_name_to_point = HashMap::new();
-    let mut container_name_to_parents: BTreeMap<&str, DependencyComponent> = BTreeMap::new();
+    let mut container_name_to_parents: IndexMap<&str, DependencyComponent> = IndexMap::new();
 
     let mut container_name_to_container_struct = HashMap::new();
 
@@ -180,10 +181,9 @@ fn main() {
         }
     };
 
-    let _networks = docker_compose_yaml
+    let networks = docker_compose_yaml
         .get("networks")
         .and_then(DockerContainer::parse_networks);
-    // dbg!(networks);
 
     let mut identifier: i32 = 1;
     for (container_name_val, container_data_val) in services.as_mapping().unwrap() {
@@ -205,8 +205,13 @@ fn main() {
 
     let containers_traversal_order =
         find_containers_traversal_order(container_name_to_parents.clone());
+    let containers_in_network = find_containers_in_network(
+        container_name_to_parents.clone(),
+        networks.clone(),
+        container_name_to_container_struct.clone(),
+    );
 
-    for cn_name in containers_traversal_order {
+    for cn_name in containers_traversal_order.clone() {
         let container_width =
             width + find_additional_width(cn_name.as_str(), &scale, &excalidraw_config.font.size);
         let container_struct = container_name_to_container_struct
@@ -316,6 +321,44 @@ fn main() {
         container_name_rectangle_structs.insert(cn_name, rectangle_struct);
     }
 
+    dbg!(containers_in_network.clone());
+    for (network_name, first_container_name, last_container_name) in containers_in_network.clone() {
+        // dbg!(network_name.clone());
+        // dbg!(first_container_name.clone());
+        // dbg!(last_container_name.clone());
+        let first_get = container_name_rectangle_structs
+            .get(first_container_name.as_str())
+            .unwrap();
+        // dbg!(first_get);
+        let last_get = container_name_rectangle_structs
+            .get(last_container_name.as_str())
+            .unwrap();
+        // dbg!(last_get);
+        let network_rectangle = Element::simple_rectangle(
+            format!("network_rectangle_{network_name}"),
+            first_get.x - x_margin / 2,
+            first_get.y - x_margin / 2,
+            (last_get.x - first_get.x) + last_get.width + x_margin,
+            (last_get.y - first_get.y) + last_get.height + y_margin,
+            Vec::new(),
+            Vec::new(),
+            "#f6edc4".to_string(),
+            excalidraw_config.services.fill.clone(),
+            elements::CONNECTION_STYLE.into(),
+            excalidraw_config.services.edge.clone(),
+        );
+        let network_text = Element::draw_small_monospaced_text(
+            network_name,
+            first_get.x - x_margin / 2,
+            last_get.y + last_get.height + y_margin / 2,
+            Vec::new(),
+            excalidraw_config.font.size,
+            excalidraw_config.font.family,
+        );
+        excalidraw_file.elements.push(network_rectangle);
+        excalidraw_file.elements.push(network_text);
+    }
+
     for (
         container_name,
         DependencyComponent {
@@ -414,6 +457,7 @@ fn main() {
             rect.bound_elements.clone(),
             excalidraw_config.services.background_color.clone(),
             excalidraw_config.services.fill.clone(),
+            elements::STROKE_STYLE.into(),
             excalidraw_config.services.edge.clone(),
         );
         let container_text = Element::draw_small_monospaced_text(
@@ -595,7 +639,7 @@ fn extract_host_container_ports(port: &str) -> (String, String) {
 }
 
 fn find_containers_traversal_order(
-    container_name_to_parents: BTreeMap<&str, DependencyComponent>,
+    container_name_to_parents: IndexMap<&str, DependencyComponent>,
 ) -> Vec<String> {
     let mut containers_traversal_order: Vec<String> = Vec::new();
     let mut visited: HashSet<String> = HashSet::new();
@@ -608,6 +652,76 @@ fn find_containers_traversal_order(
         );
     }
     containers_traversal_order
+}
+
+fn find_containers_in_network(
+    container_name_to_parents: IndexMap<&str, DependencyComponent>,
+    networks: Option<Vec<String>>,
+    container_name_to_container_struct: HashMap<&str, DockerContainer>,
+) -> Vec<(String, String, String)> {
+    let traversal_order = find_containers_traversal_order(container_name_to_parents.clone());
+    match networks {
+        Some(networks) => match networks.len() {
+            0 => vec![(
+                "default".to_string(),
+                traversal_order.first().unwrap().to_string(),
+                traversal_order.last().unwrap().to_string(),
+            )],
+
+            1 => vec![(
+                networks.first().unwrap().to_string(),
+                traversal_order.first().unwrap().to_string(),
+                traversal_order.last().unwrap().to_string(),
+            )],
+            _ => {
+                // here, based on `traversal_order` we need to find first and last for each network
+                let mut result = vec![];
+                for network in networks {
+                    // dbg!(network.clone());
+                    // dbg!(traversal_order.clone());
+                    let containers_within_network: Vec<String> = traversal_order
+                        .iter()
+                        .filter(|name| {
+                            is_in_network(
+                                &container_name_to_container_struct.clone(),
+                                name.to_string(),
+                                network.clone(),
+                            )
+                        })
+                        .cloned()
+                        .collect();
+                    // dbg!(containers_within_network.clone());
+                    result.push((
+                        network,
+                        containers_within_network.first().unwrap().to_string(),
+                        containers_within_network.last().unwrap().to_string(),
+                    ))
+                }
+                result
+            }
+        },
+        None => {
+            vec![(
+                "default".to_string(),
+                traversal_order.first().unwrap().to_string(),
+                traversal_order.last().unwrap().to_string(),
+            )]
+        }
+    }
+}
+
+fn is_in_network(
+    container_name_to_container_struct: &HashMap<&str, DockerContainer>,
+    container_name: String,
+    network_name: String,
+) -> bool {
+    container_name_to_container_struct
+        .get(container_name.as_str())
+        .unwrap()
+        .clone()
+        .networks
+        .unwrap()
+        .contains(&network_name)
 }
 
 /// According to current `exc.app_state.grid_size` setting and text/font size
@@ -648,8 +762,8 @@ struct DockerContainer {
     depends_on: Option<Vec<String>>,
     ports: Option<Vec<String>>, // HOST:CONTAINER
     volumes: Option<Vec<String>>,
-    networks: Option<Vec<String>>,
-    // TODO: add other fields
+    networks: Option<Vec<String>>, // TODO consider Set
+                                   // TODO: add other fields
 }
 
 impl DockerContainer {

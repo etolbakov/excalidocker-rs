@@ -21,6 +21,8 @@ thiserror = "1.0.40"
 rand = "0.8.5"
 isahc = "1.7"
 phf = { version = "0.11", features = ["macros"] }
+# linked list to store the containers in the order they appear in the docker-compose.yaml
+indexmap = { version = "2.0.0", features = ["serde"] }
 
 # https://github.com/sfackler/rust-openssl/issues/1021
 openssl = { version = "0.10", features = ["vendored"] }

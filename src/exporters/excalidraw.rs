@@ -408,6 +408,7 @@ impl Element {
         bound_elements: Vec<BoundElement>,
         background_color: String,
         fill_style: String,
+        stroke_style: String,
         edge: String,
     ) -> Self {
         Self::rectangle(
@@ -423,7 +424,7 @@ impl Element {
             background_color, //elements::BACKGROUND_COLOR.into(),
             fill_style,       //elements::FILL_STYLE.into(),
             elements::STROKE_WIDTH,
-            elements::STROKE_STYLE.into(),
+            stroke_style,
             roundness(edge),
             elements::OPACITY,
             elements::STROKE_SHARPNESS.into(),
