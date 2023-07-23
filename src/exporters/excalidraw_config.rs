@@ -114,7 +114,7 @@ pub fn roundness(edge: String) -> Option<Roundness> {
 }
 
 fn serialize_background_color<S: Serializer>(input: &String, s: S) -> Result<S::Ok, S::Error> {
-    if input.starts_with("#") {
+    if input.starts_with('#') {
         input.serialize(s)
     } else {
         COLOR_TO_HEX.get(input).unwrap_or(&"#000000").serialize(s)

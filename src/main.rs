@@ -13,8 +13,7 @@ use exporters::excalidraw_config::{
 use exporters::excalidraw_config::{margins, ExcalidrawConfig};
 use indexmap::IndexMap;
 use rand::{distributions::Alphanumeric, Rng};
-use std::collections::HashSet;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::vec;
 
@@ -205,13 +204,8 @@ fn main() {
 
     let containers_traversal_order =
         find_containers_traversal_order(container_name_to_parents.clone());
-    let containers_in_network = find_containers_in_network(
-        container_name_to_parents.clone(),
-        networks.clone(),
-        container_name_to_container_struct.clone(),
-    );
 
-    for cn_name in containers_traversal_order.clone() {
+    for cn_name in containers_traversal_order {
         let container_width =
             width + find_additional_width(cn_name.as_str(), &scale, &excalidraw_config.font.size);
         let container_struct = container_name_to_container_struct
@@ -321,19 +315,18 @@ fn main() {
         container_name_rectangle_structs.insert(cn_name, rectangle_struct);
     }
 
-    dbg!(containers_in_network.clone());
-    for (network_name, first_container_name, last_container_name) in containers_in_network.clone() {
-        // dbg!(network_name.clone());
-        // dbg!(first_container_name.clone());
-        // dbg!(last_container_name.clone());
+    let containers_in_network = find_containers_in_network(
+        container_name_to_parents.clone(),
+        networks,
+        container_name_to_container_struct.clone(),
+    );
+    for (network_name, first_container_name, last_container_name) in containers_in_network {
         let first_get = container_name_rectangle_structs
             .get(first_container_name.as_str())
             .unwrap();
-        // dbg!(first_get);
         let last_get = container_name_rectangle_structs
             .get(last_container_name.as_str())
             .unwrap();
-        // dbg!(last_get);
         let network_rectangle = Element::simple_rectangle(
             format!("network_rectangle_{network_name}"),
             first_get.x - x_margin / 2,
