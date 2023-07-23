@@ -321,18 +321,47 @@ fn main() {
         container_name_to_container_struct.clone(),
     );
     for (network_name, first_container_name, last_container_name) in containers_in_network {
-        let first_get = container_name_rectangle_structs
-            .get(first_container_name.as_str())
-            .unwrap();
-        let last_get = container_name_rectangle_structs
-            .get(last_container_name.as_str())
-            .unwrap();
+        let (first_x, first_y, _, _) = find_container_location(
+            &container_name_rectangle_structs,
+            first_container_name.as_str(),
+        );
+        let (last_x, last_y, last_width, last_height) = find_container_location(
+            &container_name_rectangle_structs,
+            last_container_name.as_str(),
+        );
+        let (
+            network_rectangle_x,
+            network_rectangle_y,
+            network_rectangle_width,
+            network_rectangle_height,
+        ) = get_network_rectangle_xy_width_height(
+            alignment_mode,
+            first_x,
+            first_y,
+            last_x,
+            last_y,
+            last_width,
+            last_height,
+            x_margin,
+            y_margin,
+        );
+        let (network_text_x, network_text_y) = get_network_text_xy(
+            alignment_mode,
+            first_x,
+            first_y,
+            last_x,
+            last_y,
+            last_width,
+            last_height,
+            x_margin,
+            y_margin,
+        );
         let network_rectangle = Element::simple_rectangle(
             format!("network_rectangle_{network_name}"),
-            first_get.x - x_margin / 2,
-            first_get.y - x_margin / 2,
-            (last_get.x - first_get.x) + last_get.width + x_margin,
-            (last_get.y - first_get.y) + last_get.height + y_margin,
+            network_rectangle_x,
+            network_rectangle_y,
+            network_rectangle_width,
+            network_rectangle_height,
             Vec::new(),
             Vec::new(),
             "#f6edc4".to_string(),
@@ -342,8 +371,8 @@ fn main() {
         );
         let network_text = Element::draw_small_monospaced_text(
             network_name,
-            first_get.x - x_margin / 2,
-            last_get.y + last_get.height + y_margin / 2,
+            network_text_x,
+            network_text_y,
             Vec::new(),
             excalidraw_config.font.size,
             excalidraw_config.font.family,
@@ -479,6 +508,19 @@ fn main() {
     }
 }
 
+fn find_container_location(
+    structs: &HashMap<String, RectangleStruct>,
+    container_name: &str,
+) -> (i32, i32, i32, i32) {
+    let rectangle_struct = structs.get(container_name).unwrap();
+    (
+        rectangle_struct.x,
+        rectangle_struct.y,
+        rectangle_struct.width,
+        rectangle_struct.height,
+    )
+}
+
 fn create_dependency_component(
     id: String,
     container_name: String,
@@ -606,6 +648,51 @@ fn get_container_xy(alignment_mode: &str, width: &i32, scale: &i32, i: i32) -> (
     } else {
         (i * 80, scale * 8)
     }
+}
+
+fn get_network_rectangle_xy_width_height(
+    alignment_mode: &str,
+    first_x: i32,
+    first_y: i32,
+    last_x: i32,
+    last_y: i32,
+    last_width: i32,
+    last_height: i32,
+    x_margin: i32,
+    y_margin: i32,
+) -> (i32, i32, i32, i32) {
+    if alignment_mode == "stepped" {
+        (
+            first_x - x_margin / 2,
+            first_y - x_margin / 2,
+            (last_x - first_x) + last_width + x_margin,
+            (last_y - first_y) + last_height + y_margin,
+        )
+    } else if alignment_mode == "vertical"  {
+        (0_i32, 0_i32, 0_i32, 0_i32)
+    } else {
+        (0_i32, 0_i32, 0_i32, 0_i32)
+    }
+}
+
+fn get_network_text_xy(
+    alignment_mode: &str,
+    first_x: i32,
+    first_y: i32,
+    last_x: i32,
+    last_y: i32,
+    last_width: i32,
+    last_height: i32,
+    x_margin: i32,
+    y_margin: i32,
+)  -> (i32, i32) {
+    if alignment_mode == "stepped" {
+        (first_x - x_margin / 2, last_y + last_height + y_margin / 2,)
+    } else if alignment_mode == "vertical"  {
+        (0_i32, 0_i32)
+    } else {
+        (0_i32, 0_i32)
+    }    
 }
 
 /// There are several ways to declare ports:
