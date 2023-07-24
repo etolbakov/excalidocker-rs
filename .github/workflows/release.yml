@@ -5,13 +5,14 @@ on:
   push:
     branches:
       - main
+      - fix/consistent-ordering
     paths:
       - src/**
       - Cargo.toml
 
 env:
   RUST_TOOLCHAIN: nightly-2023-05-03
-  BUILD_VERSION_PREFIX: v0.1.7
+  BUILD_VERSION_PREFIX: v0.1.8-prerelease
   CARGO_PROFILE: release
 
 permissions:
@@ -19,182 +20,8 @@ permissions:
 
 jobs:
 
-  proceed_release:
-    name: Create new release for these changes?
-    runs-on: ubuntu-latest
-    outputs:
-      PROCEED_WITH_RELEASE: ${{ steps.decision.outputs.PROCEED_WITH_RELEASE }}
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-
-      - name: Get the version
-        id: get_version
-        run: echo "VERSION=$(grep "^version" Cargo.toml | awk '{print $3}' | tr -d '"')" >> $GITHUB_ENV
-
-      - name: Get latest release
-        id: get_latest_release
-        run: echo "LATEST_RELEASE=$(curl -ksL https://api.github.com/repos/etolbakov/excalidocker-rs/releases/latest | jq -r '.tag_name')" >> $GITHUB_ENV
-
-      - id: decision
-        name: Compare versions and skip release if equal
-        run: |
-          echo "Version: '${{ env.VERSION }}' | latest release: '${{ env.LATEST_RELEASE }}'"
-          if [ "${{ env.VERSION }}" = "${{ env.LATEST_RELEASE }}" ]; then
-            echo "PROCEED_WITH_RELEASE=false" >> $GITHUB_OUTPUT
-            echo "Latest release version matches current version. Skipping building & release steps."            
-          else
-            echo "PROCEED_WITH_RELEASE=true" >> $GITHUB_OUTPUT
-            echo "Proceeding with building & release steps."          
-          fi
-          
-
-  build-macos:
-    name: Build macOS binary
-    needs: [proceed_release]
-    if: needs.proceed_release.outputs.PROCEED_WITH_RELEASE == 'true'
-    strategy:
-      matrix:
-        # The file format is excalidocker-<os>-<arch>
-        include:
-          - arch: aarch64-apple-darwin
-            os: macos-latest
-            file: excalidocker-darwin-arm64
-            continue-on-error: false
-          - arch: x86_64-apple-darwin
-            os: macos-latest
-            file: excalidocker-darwin-amd64
-            continue-on-error: false
-    runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.continue-on-error }}
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-
-      - name: Cache cargo assets
-        id: cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ matrix.arch }}-build-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Install rust toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ env.RUST_TOOLCHAIN }}
-          targets: ${{ matrix.arch }}
-      - name: Install latest nextest release
-        uses: taiki-e/install-action@nextest
-      - name: Output package versions
-        run: cargo version ; rustc --version ; gcc --version ; g++ --version
-
-      - name: Run cargo build
-        run: cargo build --profile ${{ env.CARGO_PROFILE }} --target ${{ matrix.arch }}
-
-      - name: Calculate checksum and rename binary
-        shell: bash
-        run: |
-          cd target/${{ matrix.arch }}/${{ env.CARGO_PROFILE }}
-          chmod +x excalidocker
-          tar -zcvf ${{ matrix.file }}.tgz excalidocker
-          echo $(shasum -a 256 ${{ matrix.file }}.tgz | cut -f1 -d' ') > ${{ matrix.file }}.sha256sum
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.file }}
-          path: target/${{ matrix.arch }}/${{ env.CARGO_PROFILE }}/${{ matrix.file }}.tgz
-
-      - name: Upload checksum of artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.file }}.sha256sum
-          path: target/${{ matrix.arch }}/${{ env.CARGO_PROFILE }}/${{ matrix.file }}.sha256sum
-
-  build-linux:
-    name: Build linux binary
-    needs: [proceed_release]
-    if: needs.proceed_release.outputs.PROCEED_WITH_RELEASE == 'true'
-    strategy:
-      matrix:
-        # The file format is excalidocker-<os>-<arch>
-        include:
-          - arch: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
-            file: excalidocker-linux-amd64
-            continue-on-error: false
-          - arch: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
-            file: excalidocker-linux-arm64
-            continue-on-error: false
-    runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.continue-on-error }}
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-
-      - name: Cache cargo assets
-        id: cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ matrix.arch }}-build-cargo-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Install dependencies for linux
-        run: |
-          sudo apt-get -y update
-          sudo apt-get -y install libssl-dev pkg-config g++-aarch64-linux-gnu gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu wget
-
-      - name: Install rust toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ env.RUST_TOOLCHAIN }}
-          targets: ${{ matrix.arch }}
-
-      - name: Install latest nextest release
-        uses: taiki-e/install-action@nextest
-
-      - name: Output package versions
-        run: cargo version ; rustc --version ; gcc --version ; g++ --version
-
-      - name: Run cargo build
-        shell: bash
-        run: cargo build --profile ${{ env.CARGO_PROFILE }} --target ${{ matrix.arch }}
-
-      - name: Calculate checksum and rename binary
-        shell: bash
-        run: |
-          cd target/${{ matrix.arch }}/${{ env.CARGO_PROFILE }}
-          chmod +x excalidocker
-          tar -zcvf ${{ matrix.file }}.tgz excalidocker
-          echo $(shasum -a 256 ${{ matrix.file }}.tgz | cut -f1 -d' ') > ${{ matrix.file }}.sha256sum
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.file }}
-          path: target/${{ matrix.arch }}/${{ env.CARGO_PROFILE }}/${{ matrix.file }}.tgz
-
-      - name: Upload checksum of artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.file }}.sha256sum
-          path: target/${{ matrix.arch }}/${{ env.CARGO_PROFILE }}/${{ matrix.file }}.sha256sum
-
   docker:
     name: Build docker image
-    needs: [proceed_release]
-    if: needs.proceed_release.outputs.PROCEED_WITH_RELEASE == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -263,7 +90,6 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            etolbakov/excalidocker:latest
             etolbakov/excalidocker:${{ env.IMAGE_TAG }}    
 
       - name: validation convert
@@ -280,34 +106,3 @@ jobs:
         run: |          
           echo "validation help"
           docker run --rm --pull always etolbakov/excalidocker:${{ env.IMAGE_TAG }} 
-
-  release:
-    name: Release artifacts
-    needs: [proceed_release, build-macos, build-linux, docker]
-    if: needs.proceed_release.outputs.PROCEED_WITH_RELEASE == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-
-      - name: Get the version
-        id: get_version
-        run: echo "VERSION=$(grep "^version" Cargo.toml | awk '{print $3}' | tr -d '"')" >> $GITHUB_ENV
-
-      - name: Get latest release
-        id: get_latest_release
-        run: echo "LATEST_RELEASE=$(curl -ksL https://api.github.com/repos/etolbakov/excalidocker-rs/releases/latest | jq -r '.tag_name')" >> $GITHUB_ENV
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-
-      - name: Publish release
-        uses: ncipollo/release-action@v1
-        with:
-          name: "${{ env.VERSION }}"
-          prerelease: false
-          makeLatest: true
-          tag: ${{ env.VERSION }}
-          generateReleaseNotes: true
-          artifacts: |
-            **/excalidocker-*
