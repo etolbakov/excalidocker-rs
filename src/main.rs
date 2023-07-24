@@ -304,7 +304,7 @@ fn main() {
             excalidraw_file.elements.push(host_port_arrow);
         }
 
-        // ------------ Define Alignment ------------
+        // ------------ Define alignment ------------
         let (x_alignment, y_alignment) = get_alignment_factor_xy(
             alignment_mode,
             x_alignment_factor,
@@ -318,6 +318,7 @@ fn main() {
         container_name_rectangle_structs.insert(cn_name, rectangle_struct);
     }
 
+    // ------------ Define network ------------
     let containers_in_network = if cli.skip_network || !excalidraw_config.network.visible {
         vec![]
     } else {
@@ -776,6 +777,9 @@ fn find_containers_in_network(
     }
 }
 
+/// Returns `True` if a container with the `container_name` name
+/// belongs to the `network_name` network.
+/// Otherwise `False`
 fn is_in_network(
     container_name_to_container_struct: &HashMap<&str, DockerContainer>,
     container_name: String,
