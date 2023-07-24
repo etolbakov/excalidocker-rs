@@ -117,7 +117,7 @@ The output should be similar to:
 Utility to convert docker-compose into excalidraw
 
 Usage: 
-excalidocker 0.1.7
+excalidocker 0.1.8
     ╰→ excalidocker --input-path <INPUT_PATH>
     ╰→ excalidocker --show-config
 
@@ -125,6 +125,7 @@ Options:
   -C, --show-config                show configuration file
   -i, --input-path <INPUT_PATH>    file path to the docker-compose.yaml
   -s, --skip-dependencies          display connecting lines between services; if `true` then only service without the lines are rendered
+  -N, --skip-network               display network(s); if `true` then network are not rendered
   -o, --output-path <OUTPUT_PATH>  file path for the output excalidraw file. By default the file content is sent to console output
   -c, --config-path <CONFIG_PATH>  config file path for the excalidraw [default: excalidocker-config.yaml]
   -h, --help                       Print help
@@ -158,6 +159,7 @@ At the moment it's possible to customize:
  - background colours for services and ports. Both hex / [colour names](https://github.com/etolbakov/excalidocker-rs/blob/main/src/color_utils.rs) are supported.
  - edge type (`sharp`, `round`)
  - enable/disable connections (has the same effect as `--skip-dependencies` cli option)
+ - enable/disable network (has the same effect as `--skip-network` cli option)
 
 ## Installation
 To build `excalidocker` locally, please follow these steps:
@@ -175,7 +177,8 @@ There is the `make r` command available in the [Makefile](/Makefile) along with 
 
 ## Roadmap
 These are the features that I would like to add at some point:
-- 📊 visualize more data from a docker-compose file - volumes, network, etc
+- 📊 visualize more data from a docker-compose file - volumes, etc.
+- 🎩 theoretically it's possible to compile the code for wasm target, so it makes sense creating a browser extension
 - 🦀 various code improvements/enhancements. Feel free to review/suggest if anything could be done better!
 - 👨‍💻 etc
 
