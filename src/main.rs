@@ -321,14 +321,12 @@ fn main() {
         container_name_to_container_struct.clone(),
     );
     for (network_name, first_container_name, last_container_name) in containers_in_network {
-        let (first_x, first_y, _, _) = find_container_location(
-            &container_name_rectangle_structs,
-            first_container_name.as_str(),
-        );
-        let (last_x, last_y, last_width, last_height) = find_container_location(
-            &container_name_rectangle_structs,
-            last_container_name.as_str(),
-        );
+        let first_container_struct = container_name_rectangle_structs
+            .get(first_container_name.as_str())
+            .unwrap();
+        let last_container_struct = container_name_rectangle_structs
+            .get(last_container_name.as_str())
+            .unwrap();
         let (
             network_rectangle_x,
             network_rectangle_y,
@@ -336,23 +334,15 @@ fn main() {
             network_rectangle_height,
         ) = get_network_rectangle_xy_width_height(
             alignment_mode,
-            first_x,
-            first_y,
-            last_x,
-            last_y,
-            last_width,
-            last_height,
+            first_container_struct,
+            last_container_struct,
             x_margin,
             y_margin,
         );
         let (network_text_x, network_text_y) = get_network_text_xy(
             alignment_mode,
-            first_x,
-            first_y,
-            last_x,
-            last_y,
-            last_width,
-            last_height,
+            first_container_struct,
+            last_container_struct,
             x_margin,
             y_margin,
         );
@@ -508,19 +498,6 @@ fn main() {
     }
 }
 
-fn find_container_location(
-    structs: &HashMap<String, RectangleStruct>,
-    container_name: &str,
-) -> (i32, i32, i32, i32) {
-    let rectangle_struct = structs.get(container_name).unwrap();
-    (
-        rectangle_struct.x,
-        rectangle_struct.y,
-        rectangle_struct.width,
-        rectangle_struct.height,
-    )
-}
-
 fn create_dependency_component(
     id: String,
     container_name: String,
@@ -652,15 +629,17 @@ fn get_container_xy(alignment_mode: &str, width: &i32, scale: &i32, i: i32) -> (
 
 fn get_network_rectangle_xy_width_height(
     alignment_mode: &str,
-    first_x: i32,
-    first_y: i32,
-    last_x: i32,
-    last_y: i32,
-    last_width: i32,
-    last_height: i32,
+    first_container_struct: &RectangleStruct,
+    last_container_struct: &RectangleStruct,
     x_margin: i32,
     y_margin: i32,
 ) -> (i32, i32, i32, i32) {
+    let first_x = first_container_struct.x;
+    let first_y = first_container_struct.y;
+    let last_x = last_container_struct.x;
+    let last_y = last_container_struct.y;
+    let last_width = last_container_struct.width;
+    let last_height = last_container_struct.height;
     match alignment_mode {
         "stepped" => (
             first_x - x_margin / 2,
@@ -686,15 +665,15 @@ fn get_network_rectangle_xy_width_height(
 
 fn get_network_text_xy(
     alignment_mode: &str,
-    first_x: i32,
-    first_y: i32,
-    _last_x: i32,
-    last_y: i32,
-    _last_width: i32,
-    last_height: i32,
+    first_container_struct: &RectangleStruct,
+    last_container_struct: &RectangleStruct,
     x_margin: i32,
     y_margin: i32,
 ) -> (i32, i32) {
+    let first_x = first_container_struct.x;
+    let first_y = first_container_struct.y;
+    let last_y = last_container_struct.y;
+    let last_height = last_container_struct.height;
     match alignment_mode {
         "stepped" => (first_x - x_margin / 2, last_y + last_height + y_margin / 2),
         "vertical" => (first_x + x_margin + 10 * 20 - 10, first_y),
