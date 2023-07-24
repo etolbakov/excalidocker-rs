@@ -684,12 +684,9 @@ fn get_network_text_xy(
     let last_y = last_container_struct.y;
     let last_height = last_container_struct.height;
     match alignment_mode {
-        "stepped" => (first_x - x_margin / 2, last_y + last_height + y_margin / 2),
-        "vertical" => (first_x + x_margin + 10 * 20 - 10, first_y),
-        "horizontal" => (
-            first_x - x_margin / 2,
-            last_y + last_height + y_margin / 2 + 40,
-        ),
+        "stepped" => (first_x - x_margin / 2, last_y - last_height - y_margin),
+        "vertical" => (first_x + x_margin - 6 * 20, first_y),
+        "horizontal" => (first_x - x_margin / 2, last_y - last_height - y_margin),
         _ => (0_i32, 0_i32),
     }
 }
@@ -751,8 +748,6 @@ fn find_containers_in_network(
                 // here, based on `traversal_order` we need to find first and last for each network
                 let mut result = vec![];
                 for network in networks {
-                    // dbg!(network.clone());
-                    // dbg!(traversal_order.clone());
                     let containers_within_network: Vec<String> = traversal_order
                         .iter()
                         .filter(|name| {
