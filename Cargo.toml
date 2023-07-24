@@ -1,6 +1,6 @@
 [package]
 name = "excalidocker"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 authors = ["Evgeny Tolbakov <ev.tolbakov@gmail.com>"]
 description = "Utility to convert your docker-compose into excalidraw"
