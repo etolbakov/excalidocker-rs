@@ -123,6 +123,7 @@ pub enum Element {
 pub mod elements {
     pub const ANGLE: i32 = 0;
     pub const STROKE_COLOR: &str = "#000000";
+    pub const NETWORK_COLOR: &str = "#f2f0e6";
     pub const BACKGROUND_COLOR: &str = "transparent";
     pub const FILL_STYLE: &str = "hachure";
     pub const STROKE_WIDTH: i32 = 1;

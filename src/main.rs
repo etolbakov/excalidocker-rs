@@ -364,7 +364,7 @@ fn main() {
             network_rectangle_height,
             Vec::new(),
             Vec::new(),
-            "#f6edc4".to_string(),
+            elements::NETWORK_COLOR.into(),
             excalidraw_config.services.fill.clone(),
             elements::CONNECTION_STYLE.into(),
             excalidraw_config.services.edge.clone(),
@@ -661,17 +661,26 @@ fn get_network_rectangle_xy_width_height(
     x_margin: i32,
     y_margin: i32,
 ) -> (i32, i32, i32, i32) {
-    if alignment_mode == "stepped" {
-        (
+    match alignment_mode {
+        "stepped" => (
             first_x - x_margin / 2,
-            first_y - x_margin / 2,
+            first_y - y_margin / 2,
             (last_x - first_x) + last_width + x_margin,
             (last_y - first_y) + last_height + y_margin,
-        )
-    } else if alignment_mode == "vertical"  {
-        (0_i32, 0_i32, 0_i32, 0_i32)
-    } else {
-        (0_i32, 0_i32, 0_i32, 0_i32)
+        ),
+        "vertical" => (
+            first_x - x_margin / 4 - 40,
+            first_y - y_margin / 4,
+            (last_x - first_x + 2 * 40) + last_width + x_margin,
+            (last_y - first_y) + last_height + y_margin / 2,
+        ),
+        "horizontal" => (
+            first_x - x_margin / 2,
+            first_y - y_margin / 2 - 40,
+            (last_x - first_x) + last_width + x_margin,
+            (last_y - first_y + 2 * 40) + last_height + y_margin,
+        ),
+        _ => (0_i32, 0_i32, 0_i32, 0_i32),
     }
 }
 
@@ -679,20 +688,22 @@ fn get_network_text_xy(
     alignment_mode: &str,
     first_x: i32,
     first_y: i32,
-    last_x: i32,
+    _last_x: i32,
     last_y: i32,
-    last_width: i32,
+    _last_width: i32,
     last_height: i32,
     x_margin: i32,
     y_margin: i32,
-)  -> (i32, i32) {
-    if alignment_mode == "stepped" {
-        (first_x - x_margin / 2, last_y + last_height + y_margin / 2,)
-    } else if alignment_mode == "vertical"  {
-        (0_i32, 0_i32)
-    } else {
-        (0_i32, 0_i32)
-    }    
+) -> (i32, i32) {
+    match alignment_mode {
+        "stepped" => (first_x - x_margin / 2, last_y + last_height + y_margin / 2),
+        "vertical" => (first_x + x_margin + 10 * 20 - 10, first_y),
+        "horizontal" => (
+            first_x - x_margin / 2,
+            last_y + last_height + y_margin / 2 + 40,
+        ),
+        _ => (0_i32, 0_i32),
+    }
 }
 
 /// There are several ways to declare ports:
