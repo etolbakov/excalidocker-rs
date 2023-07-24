@@ -47,6 +47,9 @@ struct Cli {
     /// display connecting lines between services; if `true` then only service without the lines are rendered
     #[arg(short, long, default_value_t = false)]
     skip_dependencies: bool,
+    /// display network(s); if `true` then network are not rendered
+    #[arg(short = 'N', long, default_value_t = false)]
+    skip_network: bool,
     /// file path for the output excalidraw file.
     /// By default the file content is sent to console output
     #[arg(short, long)]
@@ -315,11 +318,16 @@ fn main() {
         container_name_rectangle_structs.insert(cn_name, rectangle_struct);
     }
 
-    let containers_in_network = find_containers_in_network(
-        container_name_to_parents.clone(),
-        networks,
-        container_name_to_container_struct.clone(),
-    );
+    let containers_in_network = if cli.skip_network || !excalidraw_config.network.visible {
+        vec![]
+    } else {
+        find_containers_in_network(
+            container_name_to_parents.clone(),
+            networks,
+            container_name_to_container_struct.clone(),
+        )
+    };
+
     for (network_name, first_container_name, last_container_name) in containers_in_network {
         let first_container_struct = container_name_rectangle_structs
             .get(first_container_name.as_str())
@@ -732,12 +740,7 @@ fn find_containers_in_network(
     let traversal_order = find_containers_traversal_order(container_name_to_parents.clone());
     match networks {
         Some(networks) => match networks.len() {
-            0 => vec![(
-                "default".to_string(),
-                traversal_order.first().unwrap().to_string(),
-                traversal_order.last().unwrap().to_string(),
-            )],
-
+            0 => vec![],
             1 => vec![(
                 networks.first().unwrap().to_string(),
                 traversal_order.first().unwrap().to_string(),
@@ -760,7 +763,6 @@ fn find_containers_in_network(
                         })
                         .cloned()
                         .collect();
-                    // dbg!(containers_within_network.clone());
                     result.push((
                         network,
                         containers_within_network.first().unwrap().to_string(),
@@ -770,13 +772,7 @@ fn find_containers_in_network(
                 result
             }
         },
-        None => {
-            vec![(
-                "default".to_string(),
-                traversal_order.first().unwrap().to_string(),
-                traversal_order.last().unwrap().to_string(),
-            )]
-        }
+        None => vec![],
     }
 }
 

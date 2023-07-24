@@ -13,3 +13,5 @@ connections: # arrow
   edge: "sharp" # "sharp", "round"
 alignment:
   mode: "stepped" # "stepped" (default), "vertical", "horizontal" ("grouped" to be supported)
+network: # rectangle
+  visible: true # true / false

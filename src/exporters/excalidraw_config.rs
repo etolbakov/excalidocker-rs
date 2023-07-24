@@ -25,6 +25,8 @@ connections:
   edge: "sharp"
 alignment:
   mode: "stepped"
+network:
+  visible: true
 "###;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -34,6 +36,7 @@ pub struct ExcalidrawConfig {
     pub ports: Ports,
     pub connections: Connections,
     pub alignment: Alignment,
+    pub network: Network,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -61,6 +64,11 @@ pub struct Ports {
 pub struct Connections {
     pub visible: bool,
     pub edge: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Network {
+    pub visible: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
