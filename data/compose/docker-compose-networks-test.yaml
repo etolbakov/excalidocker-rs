@@ -1,0 +1,50 @@
+services:
+  service_one:
+    build: ./service_one
+    networks:
+      - network_one
+  service_two:
+    build: ./service_two
+    networks:
+      - network_one
+      - network_two
+  proxy:
+    build: ./proxy
+    networks:
+      - network_two
+      - frontend
+  app:
+    build: ./app
+    networks:
+      - frontend
+      - backend
+  db:
+    image: postgres
+    networks:
+      - backend
+      - network_three
+  service_three:
+    build: ./service_three
+    networks:
+      - network_three
+  service_four:
+    build: ./service_four
+    networks:
+      - network_three
+
+networks:
+  network_one:
+    driver: custom-driver-network_one
+  network_two:
+    driver: custom-driver-network_two
+  network_three:
+    driver: custom-driver-network_three
+  frontend:
+    # Use a custom driver
+    driver: custom-driver-1
+  backend:
+    # Use a custom driver which takes special options
+    driver: custom-driver-2
+    driver_opts:
+      foo: "1"
+      bar: "2"

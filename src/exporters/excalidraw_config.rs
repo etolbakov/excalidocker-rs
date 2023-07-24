@@ -1,8 +1,11 @@
-use crate::exporters::excalidraw_config::consts::{
-    NO_X_ALIGNMENT_FACTOR, NO_X_MARGIN, NO_Y_ALIGNMENT_FACTOR, NO_Y_MARGIN, X_ALIGNMENT_FACTOR,
-    X_MARGIN, Y_ALIGNMENT_FACTOR, Y_MARGIN,
+use crate::{
+    color_utils::COLOR_TO_HEX,
+    exporters::excalidraw_config::consts::{
+        NO_X_ALIGNMENT_FACTOR, NO_X_MARGIN, NO_Y_ALIGNMENT_FACTOR, NO_Y_MARGIN, X_ALIGNMENT_FACTOR,
+        X_MARGIN, Y_ALIGNMENT_FACTOR, Y_MARGIN,
+    },
 };
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 
 pub const DEFAULT_CONFIG_PATH: &str = "excalidocker-config.yaml";
 
@@ -22,6 +25,8 @@ connections:
   edge: "sharp"
 alignment:
   mode: "stepped"
+network:
+  visible: true
 "###;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -31,6 +36,7 @@ pub struct ExcalidrawConfig {
     pub ports: Ports,
     pub connections: Connections,
     pub alignment: Alignment,
+    pub network: Network,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -41,6 +47,7 @@ pub struct Font {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Services {
+    #[serde(serialize_with = "serialize_background_color")]
     pub background_color: String,
     pub fill: String,
     pub edge: String,
@@ -48,6 +55,7 @@ pub struct Services {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Ports {
+    #[serde(serialize_with = "serialize_background_color")]
     pub background_color: String,
     pub fill: String,
 }
@@ -56,6 +64,11 @@ pub struct Ports {
 pub struct Connections {
     pub visible: bool,
     pub edge: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Network {
+    pub visible: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -105,6 +118,17 @@ pub fn roundness(edge: String) -> Option<Roundness> {
     match edge.as_str() {
         "round" => Some(Roundness { roundness_type: 3 }),
         _ => None,
+    }
+}
+
+fn serialize_background_color<S: Serializer>(input: &String, s: S) -> Result<S::Ok, S::Error> {
+    if input.starts_with('#') {
+        input.serialize(s)
+    } else {
+        COLOR_TO_HEX
+            .get(input)
+            .unwrap_or(&crate::elements::STROKE_COLOR)
+            .serialize(s)
     }
 }
 

@@ -6,10 +6,12 @@ services: # rectangle
   fill: "hachure" # "hachure", "cross-hatch", "solid"
   edge: "round" # "sharp", "round"
 ports: # ellipse
-  background_color: "#a5d8ff"
+  background_color: "lightblue"
   fill: "hachure" # "hachure","cross-hatch", "solid"
 connections: # arrow
   visible: true # true / false
   edge: "sharp" # "sharp", "round"
 alignment:
   mode: "stepped" # "stepped" (default), "vertical", "horizontal" ("grouped" to be supported)
+network: # rectangle
+  visible: true # true / false

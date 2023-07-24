@@ -11,7 +11,7 @@ on:
 
 env:
   RUST_TOOLCHAIN: nightly-2023-05-03
-  BUILD_VERSION_PREFIX: v0.1.7
+  BUILD_VERSION_PREFIX: v0.1.8
   CARGO_PROFILE: release
 
 permissions:

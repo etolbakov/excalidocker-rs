@@ -123,6 +123,7 @@ pub enum Element {
 pub mod elements {
     pub const ANGLE: i32 = 0;
     pub const STROKE_COLOR: &str = "#000000";
+    pub const NETWORK_COLOR: &str = "#f2f0e6";
     pub const BACKGROUND_COLOR: &str = "transparent";
     pub const FILL_STYLE: &str = "hachure";
     pub const STROKE_WIDTH: i32 = 1;
@@ -408,6 +409,7 @@ impl Element {
         bound_elements: Vec<BoundElement>,
         background_color: String,
         fill_style: String,
+        stroke_style: String,
         edge: String,
     ) -> Self {
         Self::rectangle(
@@ -423,7 +425,7 @@ impl Element {
             background_color, //elements::BACKGROUND_COLOR.into(),
             fill_style,       //elements::FILL_STYLE.into(),
             elements::STROKE_WIDTH,
-            elements::STROKE_STYLE.into(),
+            stroke_style,
             roundness(edge),
             elements::OPACITY,
             elements::STROKE_SHARPNESS.into(),

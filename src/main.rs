@@ -1,3 +1,4 @@
+mod color_utils;
 mod error;
 mod exporters;
 mod file_utils;
@@ -10,9 +11,9 @@ use exporters::excalidraw_config::{
     arrow_bounded_element, binding, BoundElement, DEFAULT_CONFIG_PATH,
 };
 use exporters::excalidraw_config::{margins, ExcalidrawConfig};
+use indexmap::IndexMap;
 use rand::{distributions::Alphanumeric, Rng};
-use std::collections::HashMap;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::vec;
 
@@ -46,6 +47,9 @@ struct Cli {
     /// display connecting lines between services; if `true` then only service without the lines are rendered
     #[arg(short, long, default_value_t = false)]
     skip_dependencies: bool,
+    /// display network(s); if `true` then network are not rendered
+    #[arg(short = 'N', long, default_value_t = false)]
+    skip_network: bool,
     /// file path for the output excalidraw file.
     /// By default the file content is sent to console output
     #[arg(short, long)]
@@ -76,26 +80,22 @@ struct DependencyComponent {
 }
 
 impl DependencyComponent {
-    fn new(id: String, name: String) -> Self {
-        Self {
-            id,
-            name,
-            parent: Vec::new(),
-        }
+    fn new(id: String, name: String, parent: Vec<DependencyComponent>) -> Self {
+        Self { id, name, parent }
     }
 }
 
 fn traverse_in_hierarchy(
     name: &str,
-    dependencies: &HashMap<&str, DependencyComponent>,
+    dependencies: &IndexMap<&str, DependencyComponent>,
     containers_traversal_order: &mut Vec<String>,
     visited: &mut HashSet<String>,
 ) {
     if let Some(children) = dependencies.get(name) {
         for child in &children.parent {
-            if !visited.contains(&child.name.to_string()) {
+            if !visited.contains(&child.name) {
                 traverse_in_hierarchy(
-                    child.name.as_str(),
+                    &child.name,
                     dependencies,
                     containers_traversal_order,
                     visited,
@@ -156,10 +156,10 @@ fn main() {
     let height = 60;
     let port_diameter = 60;
 
-    let mut components = Vec::new();
     let mut container_name_rectangle_structs = HashMap::new();
     let mut container_name_to_point = HashMap::new();
-    let mut container_name_to_parents: HashMap<&str, DependencyComponent> = HashMap::new();
+    let mut container_name_to_parents: IndexMap<&str, DependencyComponent> = IndexMap::new();
+
     let mut container_name_to_container_struct = HashMap::new();
 
     let input_path = &cli.input_path.unwrap();
@@ -183,10 +183,9 @@ fn main() {
         }
     };
 
-    let _networks = docker_compose_yaml
+    let networks = docker_compose_yaml
         .get("networks")
         .and_then(DockerContainer::parse_networks);
-    // dbg!(networks);
 
     let mut identifier: i32 = 1;
     for (container_name_val, container_data_val) in services.as_mapping().unwrap() {
@@ -196,22 +195,18 @@ fn main() {
             DockerContainer::convert_to_container(container_id.clone(), container_data_val);
         let container_name_str = container_name_val.as_str().unwrap();
 
-        let mut dependency_component =
-            DependencyComponent::new(container_id, container_name_str.to_string());
-        if let Some(dependencies) = &container_struct.depends_on {
-            dependencies.iter().for_each(|name| {
-                dependency_component
-                    .parent
-                    .push(DependencyComponent::new("".to_string(), name.to_string()))
-            });
-        }
-        components.push(dependency_component.clone());
+        let dependency_component = create_dependency_component(
+            container_id,
+            container_name_str.to_string(),
+            &container_struct.depends_on,
+        );
         container_name_to_parents.insert(container_name_str, dependency_component);
         container_name_to_container_struct.insert(container_name_str, container_struct);
         identifier += 1;
     }
 
-    let containers_traversal_order = find_containers_traversal_order(container_name_to_parents);
+    let containers_traversal_order =
+        find_containers_traversal_order(container_name_to_parents.clone());
 
     for cn_name in containers_traversal_order {
         let container_width =
@@ -309,7 +304,7 @@ fn main() {
             excalidraw_file.elements.push(host_port_arrow);
         }
 
-        // ------------ Define Alignment ------------
+        // ------------ Define alignment ------------
         let (x_alignment, y_alignment) = get_alignment_factor_xy(
             alignment_mode,
             x_alignment_factor,
@@ -323,8 +318,78 @@ fn main() {
         container_name_rectangle_structs.insert(cn_name, rectangle_struct);
     }
 
-    for DependencyComponent { id, name, parent } in &components {
-        let ContainerPoint(_, x, y) = container_name_to_point.get(name).unwrap();
+    // ------------ Define network ------------
+    let containers_in_network = if cli.skip_network || !excalidraw_config.network.visible {
+        vec![]
+    } else {
+        find_containers_in_network(
+            container_name_to_parents.clone(),
+            networks,
+            container_name_to_container_struct.clone(),
+        )
+    };
+
+    for (network_name, first_container_name, last_container_name) in containers_in_network {
+        let first_container_struct = container_name_rectangle_structs
+            .get(first_container_name.as_str())
+            .unwrap();
+        let last_container_struct = container_name_rectangle_structs
+            .get(last_container_name.as_str())
+            .unwrap();
+        let (
+            network_rectangle_x,
+            network_rectangle_y,
+            network_rectangle_width,
+            network_rectangle_height,
+        ) = get_network_rectangle_xy_width_height(
+            alignment_mode,
+            first_container_struct,
+            last_container_struct,
+            x_margin,
+            y_margin,
+        );
+        let (network_text_x, network_text_y) = get_network_text_xy(
+            alignment_mode,
+            first_container_struct,
+            last_container_struct,
+            x_margin,
+            y_margin,
+        );
+        let network_rectangle = Element::simple_rectangle(
+            format!("network_rectangle_{network_name}"),
+            network_rectangle_x,
+            network_rectangle_y,
+            network_rectangle_width,
+            network_rectangle_height,
+            Vec::new(),
+            Vec::new(),
+            elements::NETWORK_COLOR.into(),
+            excalidraw_config.services.fill.clone(),
+            elements::CONNECTION_STYLE.into(),
+            excalidraw_config.services.edge.clone(),
+        );
+        let network_text = Element::draw_small_monospaced_text(
+            network_name,
+            network_text_x,
+            network_text_y,
+            Vec::new(),
+            excalidraw_config.font.size,
+            excalidraw_config.font.family,
+        );
+        excalidraw_file.elements.push(network_rectangle);
+        excalidraw_file.elements.push(network_text);
+    }
+
+    for (
+        container_name,
+        DependencyComponent {
+            id,
+            name: _,
+            parent,
+        },
+    ) in &container_name_to_parents
+    {
+        let ContainerPoint(_, x, y) = container_name_to_point.get(*container_name).unwrap();
         // any of those two conditions (cli argument or configuration setting) can switch off the connections
         let sorted_container_points =
             if cli.skip_dependencies || !excalidraw_config.connections.visible {
@@ -392,7 +457,9 @@ fn main() {
             parent_temp_struct
                 .bound_elements
                 .push(connecting_arrow_bound.clone());
-            let current_temp_struct = container_name_rectangle_structs.get_mut(name).unwrap();
+            let current_temp_struct = container_name_rectangle_structs
+                .get_mut(*container_name)
+                .unwrap();
             current_temp_struct
                 .bound_elements
                 .push(connecting_arrow_bound);
@@ -411,6 +478,7 @@ fn main() {
             rect.bound_elements.clone(),
             excalidraw_config.services.background_color.clone(),
             excalidraw_config.services.fill.clone(),
+            elements::STROKE_STYLE.into(),
             excalidraw_config.services.edge.clone(),
         );
         let container_text = Element::draw_small_monospaced_text(
@@ -436,6 +504,23 @@ fn main() {
             );
         }
         None => println!("{}", excalidraw_data),
+    }
+}
+
+fn create_dependency_component(
+    id: String,
+    container_name: String,
+    depends_on: &Option<Vec<String>>,
+) -> DependencyComponent {
+    match depends_on {
+        Some(deps) => DependencyComponent::new(
+            id,
+            container_name,
+            deps.iter()
+                .map(|name| DependencyComponent::new("".to_string(), name.to_string(), Vec::new()))
+                .collect::<Vec<DependencyComponent>>(),
+        ),
+        None => DependencyComponent::new(id, container_name, Vec::new()),
     }
 }
 
@@ -551,6 +636,61 @@ fn get_container_xy(alignment_mode: &str, width: &i32, scale: &i32, i: i32) -> (
     }
 }
 
+fn get_network_rectangle_xy_width_height(
+    alignment_mode: &str,
+    first_container_struct: &RectangleStruct,
+    last_container_struct: &RectangleStruct,
+    x_margin: i32,
+    y_margin: i32,
+) -> (i32, i32, i32, i32) {
+    let first_x = first_container_struct.x;
+    let first_y = first_container_struct.y;
+    let last_x = last_container_struct.x;
+    let last_y = last_container_struct.y;
+    let last_width = last_container_struct.width;
+    let last_height = last_container_struct.height;
+    match alignment_mode {
+        "stepped" => (
+            first_x - x_margin / 2,
+            first_y - y_margin / 2,
+            (last_x - first_x) + last_width + x_margin,
+            (last_y - first_y) + last_height + y_margin,
+        ),
+        "vertical" => (
+            first_x - x_margin / 4 - 40,
+            first_y - y_margin / 4,
+            (last_x - first_x + 2 * 40) + last_width + x_margin,
+            (last_y - first_y) + last_height + y_margin / 2,
+        ),
+        "horizontal" => (
+            first_x - x_margin / 2,
+            first_y - y_margin / 2 - 40,
+            (last_x - first_x) + last_width + x_margin,
+            (last_y - first_y + 2 * 40) + last_height + y_margin,
+        ),
+        _ => (0_i32, 0_i32, 0_i32, 0_i32),
+    }
+}
+
+fn get_network_text_xy(
+    alignment_mode: &str,
+    first_container_struct: &RectangleStruct,
+    last_container_struct: &RectangleStruct,
+    x_margin: i32,
+    y_margin: i32,
+) -> (i32, i32) {
+    let first_x = first_container_struct.x;
+    let first_y = first_container_struct.y;
+    let last_y = last_container_struct.y;
+    let last_height = last_container_struct.height;
+    match alignment_mode {
+        "stepped" => (first_x - x_margin / 2, last_y - last_height - y_margin),
+        "vertical" => (first_x + x_margin - 6 * 20, first_y),
+        "horizontal" => (first_x - x_margin / 2, last_y - last_height - y_margin),
+        _ => (0_i32, 0_i32),
+    }
+}
+
 /// There are several ways to declare ports:
 ///  - "0" single port value(range of values): a container port(range) will be assigned to random host port(range)
 ///  - "1" colon separated values (range of values): container port (range) is assigned to given host port (range)
@@ -575,7 +715,7 @@ fn extract_host_container_ports(port: &str) -> (String, String) {
 }
 
 fn find_containers_traversal_order(
-    container_name_to_parents: HashMap<&str, DependencyComponent>,
+    container_name_to_parents: IndexMap<&str, DependencyComponent>,
 ) -> Vec<String> {
     let mut containers_traversal_order: Vec<String> = Vec::new();
     let mut visited: HashSet<String> = HashSet::new();
@@ -587,8 +727,66 @@ fn find_containers_traversal_order(
             &mut visited,
         );
     }
-    // Vec::from_iter(visited)
     containers_traversal_order
+}
+
+fn find_containers_in_network(
+    container_name_to_parents: IndexMap<&str, DependencyComponent>,
+    networks: Option<Vec<String>>,
+    container_name_to_container_struct: HashMap<&str, DockerContainer>,
+) -> Vec<(String, String, String)> {
+    let traversal_order = find_containers_traversal_order(container_name_to_parents.clone());
+    match networks {
+        Some(networks) => match networks.len() {
+            0 => vec![],
+            1 => vec![(
+                networks.first().unwrap().to_string(),
+                traversal_order.first().unwrap().to_string(),
+                traversal_order.last().unwrap().to_string(),
+            )],
+            _ => {
+                // here, based on `traversal_order` we need to find first and last for each network
+                let mut result = vec![];
+                for network in networks {
+                    let containers_within_network: Vec<String> = traversal_order
+                        .iter()
+                        .filter(|name| {
+                            is_in_network(
+                                &container_name_to_container_struct.clone(),
+                                name.to_string(),
+                                network.clone(),
+                            )
+                        })
+                        .cloned()
+                        .collect();
+                    result.push((
+                        network,
+                        containers_within_network.first().unwrap().to_string(),
+                        containers_within_network.last().unwrap().to_string(),
+                    ))
+                }
+                result
+            }
+        },
+        None => vec![],
+    }
+}
+
+/// Returns `True` if a container with the `container_name` name
+/// belongs to the `network_name` network.
+/// Otherwise `False`
+fn is_in_network(
+    container_name_to_container_struct: &HashMap<&str, DockerContainer>,
+    container_name: String,
+    network_name: String,
+) -> bool {
+    container_name_to_container_struct
+        .get(container_name.as_str())
+        .unwrap()
+        .clone()
+        .networks
+        .unwrap()
+        .contains(&network_name)
 }
 
 /// According to current `exc.app_state.grid_size` setting and text/font size
@@ -629,8 +827,8 @@ struct DockerContainer {
     depends_on: Option<Vec<String>>,
     ports: Option<Vec<String>>, // HOST:CONTAINER
     volumes: Option<Vec<String>>,
-    networks: Option<Vec<String>>,
-    // TODO: add other fields
+    networks: Option<Vec<String>>, // TODO consider Set
+                                   // TODO: add other fields
 }
 
 impl DockerContainer {
@@ -691,8 +889,7 @@ impl DockerContainer {
         let mapping = value.as_mapping().unwrap();
         let mut container = DockerContainer::new(id);
         for (key, value) in mapping {
-            let key_str = key.as_str().unwrap();
-            match key_str {
+            match key.as_str().unwrap() {
                 "image" => {
                     if let Value::String(image) = value {
                         container.image = image.clone();

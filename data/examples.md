@@ -35,9 +35,9 @@ docker run --rm --pull always \
            > produced-by-image.excalidraw
 ```
 
-2. Convert a remote file (conversion via github link)
+2. Convert a remote file (conversion via a GitHub link)
 Specify the url to the `docker-compose.yaml` as a `INPUT_PATH` environment variable for the docker image.
-Both the github link and the link to the raw file work.
+Both the GitHub link and the link to the raw file work.
 
 ```sh
 docker run --rm --pull always \
@@ -64,7 +64,18 @@ docker run --rm --pull always \
            > produced-by-image-no-deps.excalidraw
 ```
 
-4. Convert a local file with the provided config
+4. Convert a remote file and skip dependency links.
+Set `SKIP_NETWORK=true` to switch off dependency arrows
+
+```sh
+docker run --rm --pull always \
+           -e INPUT_PATH=https://github.com/etolbakov/excalidocker-rs/blob/main/data/compose/docker-compose-networks.yaml \
+           -e SKIP_NETWORK=true \
+           etolbakov/excalidocker:latest \
+           > produced-by-image-no-network.excalidraw
+```
+
+5. Convert a local file with the provided config
 Specify the path to the  configuration file `excalidocker-config.yaml` as a `CONFIG_PATH` environment variable for the docker image.
 ```sh
    docker run --rm --pull always \
@@ -76,7 +87,7 @@ Specify the path to the  configuration file `excalidocker-config.yaml` as a `CON
              > produced-by-image-config-deps.excalidraw
 ```
 
-5. Show config
+6. Show config
 Specify the `SHOW_CONFIG` environment variable. This command can be handy to generate a config for further customization.
 ```sh
 docker run --rm --pull always \
@@ -127,9 +138,15 @@ Specify `--skip-dependencies` command line argument.
 excalidocker --skip-dependencies --input-path https://github.com/apache/pinot/blob/master/docker/images/pinot/docker-compose.yml
 ```
 
-5. Convert a local file with the provided config
+5. Convert a remote file and skip network.
+Specify `--skip-network` command line argument.
+
+```sh
+excalidocker --skip-network --input-path https://github.com/etolbakov/excalidocker-rs/blob/main/data/compose/docker-compose-networks.yaml
+```
+
+6. Convert a local file with the provided config
 
 ```sh
 excalidocker --config-path /tmp/excalidocker-config.yaml --input-path https://github.com/apache/pinot/blob/master/docker/images/pinot/docker-compose.yml
 ```
-	
