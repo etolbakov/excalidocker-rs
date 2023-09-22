@@ -47,7 +47,7 @@ The idea of writing this utility originates from Robin Moffatt's [tweet](https:/
 ### Docker image
 🐳 `excalidocker` is available as a [Docker image](https://hub.docker.com/r/etolbakov/excalidocker/tags).
 Convert docker-compose files without hassle. Use as a Github action step for documentation, presentations, [ADRs](https://adr.github.io/) what have you.
-The sky is the limit. 
+The sky is the limit!
 
 Convert a _local_ file:
 
